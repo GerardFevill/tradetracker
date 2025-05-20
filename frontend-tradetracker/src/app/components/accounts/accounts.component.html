@@ -1,0 +1,77 @@
+<div class="accounts-container">
+  <div class="header">
+    <h2>Comptes de Trading</h2>
+    <div class="header-actions">
+      <button class="btn btn-primary" routerLink="/transfer">Transférer des Fonds</button>
+      <button class="btn btn-primary" routerLink="/accounts/new">Ajouter un Compte</button>
+    </div>
+  </div>
+  
+  <div class="filters">
+    <div class="filter-group">
+      <label>Devise:</label>
+      <div class="btn-group">
+        <button class="btn" [class.active]="selectedCurrency === 'all'" (click)="filterByCurrency('all')">Toutes</button>
+        <button class="btn" [class.active]="selectedCurrency === 'USD'" (click)="filterByCurrency('USD')">USD</button>
+        <button class="btn" [class.active]="selectedCurrency === 'EUR'" (click)="filterByCurrency('EUR')">EUR</button>
+      </div>
+    </div>
+    
+    <div class="filter-group">
+      <label>Broker:</label>
+      <div class="btn-group">
+        <button class="btn" [class.active]="selectedBroker === 'all'" (click)="filterByBroker('all')">Tous</button>
+        <button class="btn" [class.active]="selectedBroker === 'Roboforex'" (click)="filterByBroker('Roboforex')">Roboforex</button>
+        <button class="btn" [class.active]="selectedBroker === 'IC Markets'" (click)="filterByBroker('IC Markets')">IC Markets</button>
+        <button class="btn" [class.active]="selectedBroker === 'Other'" (click)="filterByBroker('Other')">Autres</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="accounts-list" *ngIf="(filteredAccounts$ | async) as accounts">
+    <div *ngIf="accounts.length === 0" class="no-accounts">
+      Aucun compte ne correspond aux critères sélectionnés.
+    </div>
+    
+    <div class="account-card" *ngFor="let account of accounts">
+      <div class="account-header">
+        <h3>{{ account.name }}</h3>
+        <span class="badge" [ngClass]="{'badge-usd': account.currency === 'USD', 'badge-eur': account.currency === 'EUR'}">
+          {{ account.currency }}
+        </span>
+      </div>
+      
+      <div class="account-details">
+        <div class="detail-row">
+          <span class="label">Broker:</span>
+          <span class="value">{{ account.broker }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Solde actuel:</span>
+          <span class="value">{{ account.currentBalance | currency:account.currency }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Objectif:</span>
+          <span class="value">{{ account.targetBalance | currency:account.currency }}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="label">Progression:</span>
+          <div class="progress">
+            <div class="progress-bar" 
+                 [style.width.%]="(account.currentBalance / account.targetBalance * 100) > 100 ? 100 : (account.currentBalance / account.targetBalance * 100)">
+              {{ account.currentBalance / account.targetBalance * 100 | number:'1.1-1' }}%
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="account-actions">
+        <button class="btn btn-primary" [routerLink]="['/accounts', account.id]">Détails</button>
+        <button class="btn btn-danger" (click)="deleteAccount(account.id)">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>

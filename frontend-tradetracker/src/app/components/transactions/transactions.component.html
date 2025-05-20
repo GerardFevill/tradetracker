@@ -1,0 +1,98 @@
+<div class="transactions-container">
+  <div class="header">
+    <h2>Historique des Transactions</h2>
+  </div>
+  
+  <div class="filters">
+    <div class="filter-group">
+      <label>Type:</label>
+      <div class="btn-group">
+        <button class="btn" [class.active]="selectedType === 'all'" (click)="filterByType('all')">Tous</button>
+        <button class="btn" [class.active]="selectedType === 'deposit'" (click)="filterByType('deposit')">Dépôts</button>
+        <button class="btn" [class.active]="selectedType === 'withdrawal'" (click)="filterByType('withdrawal')">Retraits</button>
+      </div>
+    </div>
+    
+    <div class="filter-group">
+      <label>Devise:</label>
+      <div class="btn-group">
+        <button class="btn" [class.active]="selectedCurrency === 'all'" (click)="filterByCurrency('all')">Toutes</button>
+        <button class="btn" [class.active]="selectedCurrency === 'USD'" (click)="filterByCurrency('USD')">USD</button>
+        <button class="btn" [class.active]="selectedCurrency === 'EUR'" (click)="filterByCurrency('EUR')">EUR</button>
+      </div>
+    </div>
+    
+    <div class="filter-group">
+      <label>Compte:</label>
+      <select class="form-control" (change)="filterByAccount($event)">
+        <option value="all">Tous les comptes</option>
+        <option *ngFor="let account of accounts$ | async" [value]="account.id">{{ account.name }}</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="summary-section" *ngIf="filteredTransactions$ | async as transactions">
+    <div class="summary-card" *ngIf="transactions.length > 0">
+      <div class="summary-header">Résumé</div>
+      <div class="summary-body">
+        <div class="summary-row">
+          <span class="label">Nombre de transactions:</span>
+          <span class="value">{{ transactions.length }}</span>
+        </div>
+        
+        <ng-container *ngFor="let entry of getTotalAmount(transactions) | keyvalue">
+          <div class="summary-row">
+            <span class="label">Total net ({{ entry.key }}):</span>
+            <span class="value" [ngClass]="{'positive': entry.value > 0, 'negative': entry.value < 0}">
+              {{ entry.value | currency:entry.key }}
+            </span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+  
+  <div class="transactions-list" *ngIf="filteredTransactions$ | async as transactions">
+    <div *ngIf="transactions.length === 0" class="no-transactions">
+      Aucune transaction ne correspond aux critères sélectionnés.
+    </div>
+    
+    <div class="transaction-item" *ngFor="let transaction of transactions">
+      <div class="transaction-icon" [ngClass]="{
+        'deposit-icon': transaction.type === 'deposit',
+        'withdrawal-icon': transaction.type === 'withdrawal'
+      }">
+        <i class="icon">{{ transaction.type === 'deposit' ? '↑' : '↓' }}</i>
+      </div>
+      
+      <div class="transaction-details">
+        <div class="transaction-header">
+          <span class="transaction-type">{{ transaction.type === 'deposit' ? 'Dépôt' : 'Retrait' }}</span>
+          <span class="transaction-date">{{ transaction.date | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+        
+        <div class="transaction-account">
+          <span class="account-name">{{ transaction.accountName }}</span>
+          <span class="badge" [ngClass]="{'badge-usd': transaction.currency === 'USD', 'badge-eur': transaction.currency === 'EUR'}">
+            {{ transaction.currency }}
+          </span>
+        </div>
+        
+        <div class="transaction-amount" [ngClass]="{
+          'positive': transaction.type === 'deposit',
+          'negative': transaction.type === 'withdrawal'
+        }">
+          {{ transaction.type === 'deposit' ? '+' : '-' }} {{ transaction.amount | currency:transaction.currency }}
+        </div>
+        
+        <div class="transaction-description" *ngIf="transaction.description">
+          {{ transaction.description }}
+        </div>
+      </div>
+      
+      <div class="transaction-actions">
+        <button class="btn btn-primary" [routerLink]="['/accounts', transaction.accountId]">Voir le compte</button>
+      </div>
+    </div>
+  </div>
+</div>

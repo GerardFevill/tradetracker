@@ -1,0 +1,256 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h2>Tableau de Bord</h2>
+    <div class="dashboard-actions">
+      <button class="btn btn-primary" routerLink="/accounts/new">
+        <svg class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path>
+        </svg>
+        Nouveau compte
+      </button>
+      <button class="btn btn-primary" routerLink="/transfer">
+        <svg class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <path d="M8.177.677l2.896 2.896a.25.25 0 0 1-.177.427H8.75v1.25a.75.75 0 0 1-1.5 0V4H5.104a.25.25 0 0 1-.177-.427L7.823.677a.25.25 0 0 1 .354 0ZM7.25 10.75a.75.75 0 0 1 1.5 0V12h2.146a.25.25 0 0 1 .177.427l-2.896 2.896a.25.25 0 0 1-.354 0l-2.896-2.896A.25.25 0 0 1 5.104 12H7.25v-1.25Zm-5-2a.75.75 0 0 0 0 1.5h12.5a.75.75 0 0 0 0-1.5H2.25Z"></path>
+        </svg>
+        Transfert
+      </button>
+    </div>
+  </div>
+  
+  <div class="summary-section" *ngIf="accountSummary$ | async as summary">
+    <h3 class="section-title">Résumé des comptes</h3>
+    <div class="summary-cards">
+      <div class="card summary-card">
+        <div class="card-icon accounts-icon">
+          <svg viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+            <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path>
+          </svg>
+        </div>
+        <div class="card-content">
+          <div class="card-title">Comptes Totaux</div>
+          <div class="card-value">{{ summary.totalAccounts }}</div>
+        </div>
+      </div>
+      
+      <div class="card summary-card">
+        <div class="card-icon usd-icon">
+          <svg viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+            <path d="M7.25 0a.75.75 0 0 1 .75.75V2h1.25a.75.75 0 0 1 0 1.5H8v1.25a.75.75 0 0 1-1.5 0V3.5h-.75a.75.75 0 0 1 0-1.5h.75V.75A.75.75 0 0 1 7.25 0ZM8 6a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 6ZM13.5 9.25a3.25 3.25 0 1 1-6.5 0 3.25 3.25 0 0 1 6.5 0ZM2.5 8.5a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"></path>
+          </svg>
+        </div>
+        <div class="card-content">
+          <div class="card-title">Solde USD</div>
+          <div class="card-value">{{ summary.totalBalanceUSD | currency:'USD' }}</div>
+          <div class="card-details">
+            <div class="target-info">Objectif: {{ summary.totalTargetUSD | currency:'USD' }}</div>
+            <div class="progress">
+              <div class="progress-bar" 
+                   [style.width.%]="summary.performanceUSD > 100 ? 100 : summary.performanceUSD"
+                   [ngClass]="{'progress-complete': summary.performanceUSD >= 100}">
+                <span class="progress-text">{{ summary.performanceUSD | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card summary-card">
+        <div class="card-icon eur-icon">
+          <svg viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+            <path d="M9.22 2.089a.75.75 0 1 0-1.44-.407c-.316 1.118-1.306 1.99-2.475 2.287a.75.75 0 1 0 .39 1.45c1.7-.457 3.066-1.729 3.525-3.33ZM2.75 1.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h10.5a.75.75 0 0 0 .75-.75V2.25a.75.75 0 0 0-.75-.75H2.75ZM1.5 2.25A1.5 1.5 0 0 1 3 .75h10.5a1.5 1.5 0 0 1 1.5 1.5v11.5a1.5 1.5 0 0 1-1.5 1.5H3a1.5 1.5 0 0 1-1.5-1.5V2.25Zm6.75 3.75a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Zm-3 0a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5Zm3 3a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Zm-3 0a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5ZM8.25 12a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Zm-3 0a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5h-1.5Z"></path>
+          </svg>
+        </div>
+        <div class="card-content">
+          <div class="card-title">Solde EUR</div>
+          <div class="card-value">{{ summary.totalBalanceEUR | currency:'EUR' }}</div>
+          <div class="card-details">
+            <div class="target-info">Objectif: {{ summary.totalTargetEUR | currency:'EUR' }}</div>
+            <div class="progress">
+              <div class="progress-bar" 
+                   [style.width.%]="summary.performanceEUR > 100 ? 100 : summary.performanceEUR"
+                   [ngClass]="{'progress-complete': summary.performanceEUR >= 100}">
+                <span class="progress-text">{{ summary.performanceEUR | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="alerts-section">
+    <h3 class="section-title">
+      <svg class="section-icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+        <path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path>
+      </svg>
+      Alertes de Seuils Atteints
+    </h3>
+    <div class="alert-list" *ngIf="accountsAboveThreshold$ | async as accountsAboveThreshold">
+      <div *ngIf="accountsAboveThreshold.length === 0" class="no-alerts">
+        <svg class="empty-icon" viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+          <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm0-1.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm0-8a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 6.5Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path>
+        </svg>
+        <p>Aucun compte n'a atteint son seuil de retrait.</p>
+      </div>
+      <div *ngFor="let account of accountsAboveThreshold" class="alert-item">
+        <div class="alert-content">
+          <strong>{{ account.name }}</strong> <span class="broker-tag">{{ account.broker }}</span>
+          <p>Solde actuel: <span class="value-highlight">{{ account.currentBalance | currency:account.currency }}</span></p>
+          <p>Seuil de retrait: <span class="threshold-value">{{ account.withdrawalThreshold | currency:account.currency }}</span></p>
+          <p>Retrait suggéré: <span class="suggestion-value">{{ account.currentBalance - account.withdrawalThreshold | currency:account.currency }}</span></p>
+        </div>
+        <div class="alert-actions">
+          <button class="btn btn-primary" [routerLink]="['/accounts', account.id]">
+            <svg class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+              <path d="M8.22 2.97a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l2.97-2.97H3.75a.75.75 0 0 1 0-1.5h7.44L8.22 4.03a.75.75 0 0 1 0-1.06Z"></path>
+            </svg>
+            Voir détails
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="quick-actions">
+    <h3 class="section-title">
+      <svg class="section-icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+        <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.879-2.773 4.264 2.559a.25.25 0 0 1 0 .428l-4.264 2.559A.25.25 0 0 1 6 10.559V5.442a.25.25 0 0 1 .379-.215Z"></path>
+      </svg>
+      Actions Rapides
+    </h3>
+    <div class="action-buttons">
+      <button class="btn btn-primary" routerLink="/accounts/new">
+        <svg class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8ZM5 12.25a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.25a.25.25 0 0 1-.4.2l-1.45-1.087a.249.249 0 0 0-.3 0L5.4 15.7a.25.25 0 0 1-.4-.2Z"></path>
+        </svg>
+        Ajouter un Compte
+      </button>
+      <button class="btn btn-primary" routerLink="/transfer">
+        <svg class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <path d="M8.177.677l2.896 2.896a.25.25 0 0 1-.177.427H8.75v1.25a.75.75 0 0 1-1.5 0V4H5.104a.25.25 0 0 1-.177-.427L7.823.677a.25.25 0 0 1 .354 0ZM7.25 10.75a.75.75 0 0 1 1.5 0V12h2.146a.25.25 0 0 1 .177.427l-2.896 2.896a.25.25 0 0 1-.354 0l-2.896-2.896A.25.25 0 0 1 5.104 12H7.25v-1.25Zm-5-2a.75.75 0 0 0 0 1.5h12.5a.75.75 0 0 0 0-1.5H2.25Z"></path>
+        </svg>
+        Transférer des Fonds
+      </button>
+      <button class="btn btn-secondary" routerLink="/accounts">
+        <svg class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25Zm7.5 6v-1.5a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0Zm-3 2.75a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm3 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm3 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm-9 3a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm3 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm3 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm3 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm-9-6a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm3 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm3 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Z"></path>
+        </svg>
+        Voir Tous les Comptes
+      </button>
+      <button class="btn btn-secondary" routerLink="/transactions">
+        <svg class="icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <path d="M1.75 1h12.5c.966 0 1.75.784 1.75 1.75v11.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25V2.75C0 1.784.784 1 1.75 1ZM1.5 2.75v11.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25H1.75a.25.25 0 0 0-.25.25ZM3.5 4h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1 0-1Zm0 3h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1 0-1Zm0 3h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1Z"></path>
+        </svg>
+        Historique des Transactions
+      </button>
+    </div>
+  </div>
+
+  <!-- Nouvelle section pour les graphiques -->
+  <div class="charts-section">
+    <h3 class="section-title">
+      <svg class="section-icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+        <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L10 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"></path>
+      </svg>
+      Analyse Graphique
+    </h3>
+
+    <div class="charts-container">
+      <!-- Graphique d'évolution des soldes -->
+      <div class="card chart-card balance-history-chart">
+        <div class="card-header">Évolution des Soldes</div>
+        <div class="card-body">
+          <div class="chart-container">
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-color usd-color"></span>
+                <span>USD</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color eur-color"></span>
+                <span>EUR</span>
+              </div>
+            </div>
+            <div class="bar-chart">
+              <div class="y-axis">
+                <div class="y-label">15K</div>
+                <div class="y-label">10K</div>
+                <div class="y-label">5K</div>
+                <div class="y-label">0</div>
+              </div>
+              <div class="bars-container">
+                <!-- Lignes horizontales de la grille -->
+                <div class="grid-line" style="bottom: 25%;"></div>
+                <div class="grid-line" style="bottom: 50%;"></div>
+                <div class="grid-line" style="bottom: 75%;"></div>
+                <div class="grid-line" style="bottom: 100%;"></div>
+                
+                <!-- Groupes de barres par mois -->
+                <div class="month-group" *ngFor="let data of balanceHistory">
+                  <div class="bar-group">
+                    <div class="bar usd-bar" [style.height.%]="(data.usd / 15000) * 100">
+                      <div class="bar-value">{{ data.usd | currency:'USD':'symbol':'1.0-0' }}</div>
+                    </div>
+                    <div class="bar eur-bar" [style.height.%]="(data.eur / 15000) * 100">
+                      <div class="bar-value">{{ data.eur | currency:'EUR':'symbol':'1.0-0' }}</div>
+                    </div>
+                  </div>
+                  <div class="x-label">{{ data.month }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Graphiques en secteurs -->
+      <div class="pie-charts-container">
+        <!-- Répartition par broker -->
+        <div class="card chart-card">
+          <div class="card-header">Répartition par Broker</div>
+          <div class="card-body">
+            <div class="pie-chart-container" *ngIf="accountsByBroker$ | async as brokerData">
+              <!-- Graphique simplifié pour la répartition par broker -->
+              <div class="distribution-chart">
+                <div *ngFor="let item of brokerData; let i = index" class="distribution-bar">
+                  <div class="distribution-bar-label">{{ item.broker }}</div>
+                  <div class="distribution-bar-container">
+                    <div class="distribution-bar-fill" 
+                         [style.width.%]="item.percentage"
+                         [ngStyle]="{'background-color': getBrokerColor(i)}">
+                      {{ item.percentage | number:'1.0-0' }}%
+                    </div>
+                  </div>
+                  <div class="distribution-bar-count">{{ item.count }} compte(s)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Répartition par devise -->
+        <div class="card chart-card">
+          <div class="card-header">Répartition par Devise</div>
+          <div class="card-body">
+            <div class="pie-chart-container" *ngIf="accountsByCurrency$ | async as currencyData">
+              <!-- Graphique simplifié pour la répartition par devise -->
+              <div class="distribution-chart">
+                <div *ngFor="let item of currencyData; let i = index" class="distribution-bar">
+                  <div class="distribution-bar-label">{{ item.currency }}</div>
+                  <div class="distribution-bar-container">
+                    <div class="distribution-bar-fill" 
+                         [style.width.%]="item.percentage"
+                         [style.background-color]="item.currency === 'USD' ? 'var(--success-color)' : 'var(--primary-color)'">
+                      {{ item.percentage | number:'1.0-0' }}%
+                    </div>
+                  </div>
+                  <div class="distribution-bar-count">{{ item.count }} compte(s)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

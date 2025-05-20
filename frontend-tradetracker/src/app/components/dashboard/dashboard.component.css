@@ -1,0 +1,617 @@
+.dashboard-container {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Header styles */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Section styles */
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0 0 16px 0;
+}
+
+.summary-section {
+  margin-bottom: 32px;
+}
+
+/* Card styles */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  box-shadow: var(--box-shadow);
+  transform: translateY(-2px);
+}
+
+.summary-card {
+  display: flex;
+  padding: 16px;
+}
+
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  margin-right: 16px;
+}
+
+.accounts-icon {
+  background-color: rgba(9, 105, 218, 0.1);
+}
+
+.accounts-icon svg {
+  fill: var(--primary-color);
+}
+
+.usd-icon {
+  background-color: rgba(46, 160, 67, 0.1);
+}
+
+.usd-icon svg {
+  fill: var(--success-color);
+}
+
+.eur-icon {
+  background-color: rgba(219, 171, 9, 0.1);
+}
+
+.eur-icon svg {
+  fill: #dbab09;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--secondary-color);
+  margin-bottom: 4px;
+}
+
+.card-value {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 8px;
+}
+
+.card-details {
+  margin-top: 12px;
+}
+
+.target-info {
+  font-size: 12px;
+  color: var(--secondary-color);
+  margin-bottom: 8px;
+}
+
+/* Progress bar */
+.progress {
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: 4px;
+  position: relative;
+}
+
+.progress-complete {
+  background-color: var(--success-color);
+}
+
+.progress-text {
+  position: absolute;
+  right: 8px;
+  top: -16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--secondary-color);
+}
+
+/* Alerts section */
+.alerts-section {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 32px;
+}
+
+.alert-list {
+  margin-top: 16px;
+}
+
+.alert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background-color: var(--card-background);
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-content strong {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.alert-content p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: var(--secondary-color);
+}
+
+.alert-actions {
+  margin-left: 16px;
+}
+
+.section-icon {
+  margin-right: 8px;
+  fill: var(--secondary-color);
+  vertical-align: middle;
+}
+
+.empty-icon {
+  fill: var(--secondary-color);
+  margin-bottom: 8px;
+}
+
+.no-alerts {
+  color: var(--secondary-color);
+  font-style: italic;
+  padding: 24px 16px;
+  text-align: center;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-alerts p {
+  margin: 8px 0 0 0;
+}
+
+.broker-tag {
+  display: inline-block;
+  background-color: var(--border-color);
+  color: var(--secondary-color);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.value-highlight {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.threshold-value {
+  font-weight: 600;
+  color: var(--info-color);
+}
+
+.suggestion-value {
+  font-weight: 600;
+  color: var(--success-color);
+}
+
+/* Quick actions */
+.quick-actions {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 32px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+/* Button styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-background);
+  color: var(--text-color);
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.btn:hover {
+  background-color: var(--background-color);
+}
+
+.btn .icon {
+  margin-right: 8px;
+  fill: currentColor;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: #0550a0;
+  border-color: #0550a0;
+}
+
+.btn-primary .icon {
+  fill: white;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+  border-color: var(--secondary-color);
+}
+
+.btn-secondary:hover {
+  background-color: #57606a;
+  border-color: #57606a;
+}
+
+/* Styles pour les graphiques */
+.charts-section {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 32px;
+}
+
+.charts-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.chart-card {
+  overflow: visible;
+}
+
+.card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  color: var(--text-color);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.card-body {
+  padding: 16px;
+}
+
+/* Variables de couleurs pour les graphiques */
+:root {
+  --chart-color-1: #0969da;
+  --chart-color-2: #2ea043;
+  --chart-color-3: #dbab09;
+  --chart-color-4: #a371f7;
+  --chart-color-5: #fa7970;
+}
+
+/* Styles pour le graphique en barres */
+.chart-container {
+  height: 300px;
+  position: relative;
+}
+
+.chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--secondary-color);
+}
+
+.legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 6px;
+}
+
+.usd-color {
+  background-color: var(--success-color);
+}
+
+.eur-color {
+  background-color: var(--primary-color);
+}
+
+.bar-chart {
+  display: flex;
+  height: 250px;
+  position: relative;
+}
+
+.y-axis {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  padding-right: 10px;
+  color: var(--secondary-color);
+  font-size: 12px;
+}
+
+.bars-container {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: 16px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.grid-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: rgba(149, 157, 165, 0.1);
+  z-index: 1;
+}
+
+.month-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.bar-group {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  height: 220px;
+  align-items: flex-end;
+}
+
+.bar {
+  flex: 1;
+  position: relative;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+
+.usd-bar {
+  background-color: var(--success-color);
+}
+
+.eur-bar {
+  background-color: var(--primary-color);
+}
+
+.bar-value {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--secondary-color);
+  white-space: nowrap;
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 2px 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.bar:hover .bar-value {
+  opacity: 1;
+}
+
+.x-label {
+  font-size: 12px;
+  color: var(--secondary-color);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Styles pour les graphiques en secteurs */
+.pie-charts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.pie-chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+}
+
+/* Styles pour les graphiques de répartition (broker et devise) */
+.distribution-chart {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.distribution-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.distribution-bar-label {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.distribution-bar-container {
+  width: 100%;
+  height: 24px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.distribution-bar-fill {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  transition: width 0.3s ease;
+}
+
+.distribution-bar-count {
+  font-size: 12px;
+  color: var(--secondary-color);
+}
+
+/* Styles de base pour les tranches de graphique */
+.pie-slice {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform-origin: center;
+}
+
+.pie-legend {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legend-label {
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.legend-value {
+  font-size: 12px;
+  color: var(--secondary-color);
+}
+
+/* Responsive styles */
+@media (min-width: 992px) {
+  .charts-container {
+    grid-template-columns: 1.5fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .alert-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .alert-actions {
+    margin-left: 0;
+    margin-top: 16px;
+    align-self: flex-end;
+  }
+  
+  .pie-charts-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .bar-chart {
+    overflow-x: auto;
+  }
+  
+  .bars-container {
+    min-width: 500px;
+  }
+}

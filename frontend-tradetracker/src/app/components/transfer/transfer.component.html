@@ -1,0 +1,135 @@
+<div class="transfer-container">
+  <div class="header">
+    <h2>Transfert entre Comptes</h2>
+    <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
+  </div>
+  
+  <div class="form-container" *ngIf="!showConfirmation">
+    <form [formGroup]="transferForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label for="sourceAccountId">Compte source *</label>
+        <select 
+          id="sourceAccountId" 
+          formControlName="sourceAccountId"
+          class="form-control"
+          [ngClass]="{'invalid': transferForm.get('sourceAccountId')?.invalid && transferForm.get('sourceAccountId')?.touched}"
+        >
+          <option value="">Sélectionnez un compte</option>
+          <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
+            {{ account.name }} ({{ account.currentBalance | currency:account.currency }})
+          </option>
+        </select>
+        <div class="error-message" *ngIf="transferForm.get('sourceAccountId')?.invalid && transferForm.get('sourceAccountId')?.touched">
+          Veuillez sélectionner un compte source.
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="targetAccountId">Compte destination *</label>
+        <select 
+          id="targetAccountId" 
+          formControlName="targetAccountId"
+          class="form-control"
+          [ngClass]="{'invalid': transferForm.get('targetAccountId')?.invalid && transferForm.get('targetAccountId')?.touched}"
+        >
+          <option value="">Sélectionnez un compte</option>
+          <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
+            {{ account.name }} ({{ account.currentBalance | currency:account.currency }})
+          </option>
+        </select>
+        <div class="error-message" *ngIf="transferForm.get('targetAccountId')?.invalid && transferForm.get('targetAccountId')?.touched">
+          Veuillez sélectionner un compte destination.
+        </div>
+        <div class="error-message" *ngIf="transferForm.hasError('sameAccounts') && transferForm.get('targetAccountId')?.touched">
+          Les comptes source et destination doivent être différents.
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="amount">Montant à transférer *</label>
+        <div class="amount-input-container" *ngIf="sourceAccount">
+          <input 
+            type="number" 
+            id="amount" 
+            formControlName="amount"
+            class="form-control"
+            [ngClass]="{'invalid': transferForm.get('amount')?.invalid && transferForm.get('amount')?.touched}"
+          >
+          <span class="currency-label">{{ sourceAccount?.currency }}</span>
+        </div>
+        <div class="error-message" *ngIf="transferForm.get('amount')?.invalid && transferForm.get('amount')?.touched">
+          <span *ngIf="transferForm.get('amount')?.errors?.['required']">Le montant est requis.</span>
+          <span *ngIf="transferForm.get('amount')?.errors?.['min']">Le montant doit être supérieur à 0.</span>
+        </div>
+      </div>
+      
+      <div class="exchange-info" *ngIf="sourceAccount && targetAccount && sourceAccount.currency !== targetAccount.currency">
+        <div class="exchange-rate-info">
+          <span class="label">Taux de change:</span>
+          <span class="value">1 {{ sourceAccount.currency }} = {{ exchangeRate | number:'1.4-4' }} {{ targetAccount.currency }}</span>
+        </div>
+        <div class="converted-amount">
+          <span class="label">Montant converti:</span>
+          <span class="value">{{ getTargetAmount() | currency:targetAccount.currency }}</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea 
+          id="description" 
+          formControlName="description"
+          class="form-control"
+          rows="3"
+        ></textarea>
+      </div>
+      
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="transferForm.invalid">Continuer</button>
+      </div>
+    </form>
+  </div>
+  
+  <div class="confirmation-container" *ngIf="showConfirmation">
+    <div class="card">
+      <div class="card-header">Confirmation du transfert</div>
+      <div class="card-body">
+        <div class="confirmation-details">
+          <div class="detail-row">
+            <span class="label">De:</span>
+            <span class="value">{{ sourceAccount?.name }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Vers:</span>
+            <span class="value">{{ targetAccount?.name }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Montant prélevé:</span>
+            <span class="value">{{ transferForm.get('amount')?.value | currency:sourceAccount?.currency }}</span>
+          </div>
+          <div class="detail-row" *ngIf="sourceAccount && targetAccount && sourceAccount.currency !== targetAccount.currency">
+            <span class="label">Montant crédité:</span>
+            <span class="value">{{ getTargetAmount() | currency:targetAccount?.currency }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Description:</span>
+            <span class="value">{{ transferForm.get('description')?.value }}</span>
+          </div>
+        </div>
+        
+        <div class="warning-message" *ngIf="sourceAccount && transferForm.get('amount')?.value > sourceAccount.currentBalance">
+          <div class="warning-icon">⚠️</div>
+          <div class="warning-content">
+            <strong>Attention:</strong> Le montant du transfert dépasse le solde actuel du compte source.
+          </div>
+        </div>
+        
+        <div class="confirmation-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelTransfer()">Retour</button>
+          <button type="button" class="btn btn-primary" (click)="confirmTransfer()">Confirmer le transfert</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
