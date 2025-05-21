@@ -35,42 +35,120 @@
     
     <div class="account-card" *ngFor="let account of accounts">
       <div class="account-header">
-        <h3>{{ account.name }}</h3>
-        <span class="badge" [ngClass]="{'badge-usd': account.currency === 'USD', 'badge-eur': account.currency === 'EUR'}">
-          {{ account.currency }}
-        </span>
+        <div class="header-main">
+          <h3>{{ account.name }}</h3>
+          <span class="badge" [ngClass]="{'badge-usd': account.currency === 'USD', 'badge-eur': account.currency === 'EUR'}">
+            {{ account.currency }}
+          </span>
+        </div>
+        <div class="last-update-info">
+          <span class="update-date">MàJ: {{ account.updatedAt | date:'dd/MM/yyyy' }}</span>
+        </div>
       </div>
       
-      <div class="account-details">
-        <div class="detail-row">
-          <span class="label">Broker:</span>
-          <span class="value">{{ account.broker }}</span>
+      <!-- Informations du compte -->
+      <div class="account-info">
+        <div class="broker-info">
+          <span class="broker-label">{{ account.broker }}</span>
         </div>
-        
-        <div class="detail-row">
-          <span class="label">Solde actuel:</span>
-          <span class="value">{{ account.currentBalance | currency:account.currency }}</span>
+        <div class="balance-info">
+          <div class="balance-amount">{{ account.currentBalance | currency:account.currency }}</div>
+          <div class="balance-label">Solde actuel</div>
         </div>
-        
-        <div class="detail-row">
-          <span class="label">Objectif:</span>
-          <span class="value">{{ account.targetBalance | currency:account.currency }}</span>
-        </div>
-        
-        <div class="detail-row">
-          <span class="label">Progression:</span>
-          <div class="progress">
-            <div class="progress-bar" 
-                 [style.width.%]="(account.currentBalance / account.targetBalance * 100) > 100 ? 100 : (account.currentBalance / account.targetBalance * 100)">
-              {{ account.currentBalance / account.targetBalance * 100 | number:'1.1-1' }}%
+        <div class="account-stats">
+          <div class="stats-row">
+            <div class="stat-item profit-stat">
+              <div class="stat-value">{{ account.totalProfits || 0 | currency:account.currency:'symbol':'1.0-0' }}</div>
+              <div class="stat-label">Gains</div>
+            </div>
+            <div class="stat-item loss-stat">
+              <div class="stat-value">{{ account.totalLosses || 0 | currency:account.currency:'symbol':'1.0-0' }}</div>
+              <div class="stat-label">Pertes</div>
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-item withdraw-stat">
+              <div class="stat-value">{{ account.totalWithdrawals || 0 | currency:account.currency:'symbol':'1.0-0' }}</div>
+              <div class="stat-label">Retraits</div>
+            </div>
+            <div class="stat-item deposit-stat">
+              <div class="stat-value">{{ account.totalDeposits || 0 | currency:account.currency:'symbol':'1.0-0' }}</div>
+              <div class="stat-label">Dépôts</div>
             </div>
           </div>
         </div>
       </div>
       
-      <div class="account-actions">
-        <button class="btn btn-primary" [routerLink]="['/accounts', account.id]">Détails</button>
-        <button class="btn btn-danger" (click)="deleteAccount(account.id)">Supprimer</button>
+      <!-- Actions principales -->
+      <div class="main-actions">
+        <button class="main-action-btn view" title="Détails" (click)="viewAccountDetails(account.id)">
+          <i class="fas fa-info-circle"></i> Détails
+        </button>
+        
+        <button class="main-action-btn profit" title="Enregistrer un gain" (click)="addProfit(account.id)">
+          <i class="fas fa-chart-line"></i> Gain
+        </button>
+        
+        <button class="main-action-btn loss" title="Enregistrer une perte" (click)="addLoss(account.id)">
+          <i class="fas fa-chart-line fa-flip-vertical"></i> Perte
+        </button>
+      </div>
+      
+      <!-- Actions secondaires -->
+      <div class="secondary-actions">
+        <button class="action-btn success" title="Dépôt" (click)="addDeposit(account.id)">
+          <i class="fas fa-money-bill-wave"></i>
+        </button>
+        <button class="action-btn warning" title="Retrait" (click)="addWithdrawal(account.id)">
+          <i class="fas fa-hand-holding-usd"></i>
+        </button>
+        <button class="action-btn info" title="Transfert" (click)="transferFunds(account.id)">
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+        <button class="action-btn danger" title="Supprimer" (click)="deleteAccount(account.id)">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Boîte de dialogue de confirmation par email -->
+<div class="modal-overlay" *ngIf="showDeleteConfirmation && accountToDeleteInfo">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Confirmation de suppression</h3>
+    </div>
+    <div class="modal-body">
+      <div class="account-info-delete">
+        <h4>Informations du compte à supprimer :</h4>
+        <div class="info-item">
+          <span class="info-label">Nom du compte :</span>
+          <span class="info-value">{{ accountToDeleteInfo.name }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Broker :</span>
+          <span class="info-value">{{ accountToDeleteInfo.broker }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Solde actuel :</span>
+          <span class="info-value">{{ accountToDeleteInfo.currentBalance | currency:accountToDeleteInfo.currency }}</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Devise :</span>
+          <span class="info-value">{{ accountToDeleteInfo.currency }}</span>
+        </div>
+      </div>
+      <div class="warning-message">
+        <i class="fas fa-exclamation-triangle warning-icon"></i> Attention : Cette action est irréversible !
+      </div>
+      <p>Êtes-vous sûr de vouloir supprimer ce compte ?</p>
+      <div class="error-message" *ngIf="deleteError">
+        {{ deleteError }}
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancelDelete()">Annuler</button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()">Confirmer la suppression</button>
       </div>
     </div>
   </div>

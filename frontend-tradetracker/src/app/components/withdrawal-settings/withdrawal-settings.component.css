@@ -1,0 +1,166 @@
+.withdrawal-settings-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.currency-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.currency-selector label {
+  margin-bottom: 0;
+  font-weight: 500;
+}
+
+.currency-selector select {
+  width: 100px;
+}
+
+.settings-description {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  border-left: 4px solid var(--primary-color);
+  border-radius: 4px;
+}
+
+.capital-range-card {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.range-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.range-header h3 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.range-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.withdrawal-rules-section {
+  margin-top: 20px;
+}
+
+.withdrawal-rules-section h4 {
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.withdrawal-rule {
+  background-color: var(--light-color);
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.rule-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  position: relative;
+}
+
+.remove-rule {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.add-rule {
+  margin-bottom: 20px;
+}
+
+.add-range {
+  margin-bottom: 30px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.save-btn {
+  padding: 10px 20px;
+  font-weight: 500;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+
+.form-control.invalid {
+  border-color: var(--danger-color);
+}
+
+.error-message {
+  color: var(--danger-color);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .range-inputs,
+  .rule-inputs {
+    grid-template-columns: 1fr;
+  }
+}

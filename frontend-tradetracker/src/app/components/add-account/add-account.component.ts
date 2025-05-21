@@ -68,7 +68,9 @@ export class AddAccountComponent implements OnInit {
       targetBalance: formValue.targetBalance,
       withdrawalThreshold: formValue.withdrawalThreshold,
       totalDeposits: formValue.currentBalance, // Initial deposit equals current balance
-      totalWithdrawals: 0
+      totalWithdrawals: 0,
+      totalProfits: 0, // Nouveau compte, pas encore de profits
+      totalLosses: 0 // Nouveau compte, pas encore de pertes
     };
     
     this.accountService.createAccount(newAccount).subscribe(account => {

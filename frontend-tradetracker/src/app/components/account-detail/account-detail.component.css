@@ -249,6 +249,67 @@
   margin: 0;
 }
 
+.tran.suggestion-alert, .recommendation-alert {
+  display: flex;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.recommendation-alert {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.alert-icon {
+  font-size: 24px;
+  margin-right: 15px;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.recommendation-details {
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  padding: 10px;
+  margin: 10px 0 15px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.detail-label {
+  font-weight: bold;
+  color: #555;
+}
+
+.no-recommendation {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 15px;
+}
+
+.no-recommendation ul {
+  margin-top: 10px;
+  padding-left: 20px;
+}
+
+.smart-withdrawal-section {
+  margin-bottom: 20px;
+}
+
+.progress-info {
+  margin-bottom: 20px;
+}
+
 .transaction-form-container {
   background-color: var(--light-color);
   border-radius: 8px;

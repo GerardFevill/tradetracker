@@ -1,0 +1,80 @@
+<div class="withdrawal-settings-container">
+  <div class="header">
+    <h2>Paramètres de Retrait Intelligent</h2>
+    <div class="currency-selector">
+      <label for="currency">Devise:</label>
+      <select id="currency" [(ngModel)]="selectedCurrency" (change)="onCurrencyChange()" class="form-control">
+        <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+      </select>
+    </div>
+  </div>
+  
+  <div class="settings-description">
+    <p>Configurez les règles de retrait intelligent en fonction des plages de capital et des pourcentages de progression vers l'objectif.</p>
+  </div>
+  
+  <form [formGroup]="ruleSetsForm" (ngSubmit)="saveSettings()">
+    <div formArrayName="capitalRanges">
+      <div *ngFor="let rangeGroup of capitalRanges.controls; let rangeIndex = index" class="capital-range-card">
+        <div [formGroupName]="rangeIndex" class="capital-range">
+          <div class="range-header">
+            <h3>Plage de capital #{{ rangeIndex + 1 }}</h3>
+            <button type="button" class="btn btn-danger btn-sm" (click)="removeCapitalRange(rangeIndex)" *ngIf="capitalRanges.length > 1">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+          
+          <div class="range-inputs">
+            <div class="form-group">
+              <label for="minAmount{{ rangeIndex }}">Montant minimum ({{ selectedCurrency }}):</label>
+              <input type="number" [id]="'minAmount' + rangeIndex" formControlName="minAmount" class="form-control" min="0" step="100">
+            </div>
+            
+            <div class="form-group">
+              <label for="maxAmount{{ rangeIndex }}">Montant maximum ({{ selectedCurrency }}):</label>
+              <input type="number" [id]="'maxAmount' + rangeIndex" formControlName="maxAmount" class="form-control" min="0" step="100">
+            </div>
+          </div>
+          
+          <div class="withdrawal-rules-section">
+            <h4>Règles de retrait</h4>
+            
+            <div formArrayName="withdrawalRules">
+              <div *ngFor="let ruleGroup of getWithdrawalRules(rangeIndex).controls; let ruleIndex = index" class="withdrawal-rule">
+                <div [formGroupName]="ruleIndex" class="rule-inputs">
+                  <div class="form-group">
+                    <label for="targetPercentage{{ rangeIndex }}_{{ ruleIndex }}">Progression vers l'objectif (%):</label>
+                    <input type="number" [id]="'targetPercentage' + rangeIndex + '_' + ruleIndex" formControlName="targetPercentage" class="form-control" min="0" max="100" step="5">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="profitPercentageToWithdraw{{ rangeIndex }}_{{ ruleIndex }}">Pourcentage des profits à retirer (%):</label>
+                    <input type="number" [id]="'profitPercentageToWithdraw' + rangeIndex + '_' + ruleIndex" formControlName="profitPercentageToWithdraw" class="form-control" min="0" max="100" step="5">
+                  </div>
+                  
+                  <button type="button" class="btn btn-danger btn-sm remove-rule" (click)="removeWithdrawalRule(rangeIndex, ruleIndex)" *ngIf="getWithdrawalRules(rangeIndex).length > 1">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <button type="button" class="btn btn-primary btn-sm add-rule" (click)="addWithdrawalRule(capitalRanges.at(rangeIndex))">
+                <i class="fas fa-plus"></i> Ajouter une règle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button type="button" class="btn btn-primary add-range" (click)="addCapitalRange()">
+        <i class="fas fa-plus"></i> Ajouter une plage de capital
+      </button>
+    </div>
+    
+    <div class="form-actions">
+      <button type="submit" class="btn btn-success save-btn">
+        <i class="fas fa-save"></i> Enregistrer les paramètres
+      </button>
+    </div>
+  </form>
+</div>

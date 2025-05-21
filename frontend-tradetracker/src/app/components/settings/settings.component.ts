@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AnalyticsService } from '../../services/analytics.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-settings',
@@ -14,7 +15,8 @@ export class SettingsComponent implements OnInit {
   
   constructor(
     private fb: FormBuilder,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -44,31 +46,41 @@ export class SettingsComponent implements OnInit {
   }
   
   updateExchangeRates(): void {
-    if (this.exchangeRateForm.invalid) return;
+    if (this.exchangeRateForm.invalid) {
+      this.notificationService.warning('Veuillez corriger les erreurs dans le formulaire.');
+      return;
+    }
     
     const { eurToUsd, usdToEur } = this.exchangeRateForm.value;
     this.analyticsService.setExchangeRates(eurToUsd, usdToEur);
     
     // In a real app, we would save this to the backend
-    this.showSuccessMessage('Taux de change mis à jour avec succès');
+    this.notificationService.success('Taux de change mis à jour avec succès');
   }
   
   updateDisplaySettings(): void {
-    if (this.displaySettingsForm.invalid) return;
+    if (this.displaySettingsForm.invalid) {
+      this.notificationService.warning('Veuillez corriger les erreurs dans le formulaire.');
+      return;
+    }
     
     // In a real app, we would save this to the backend and apply the settings
-    this.showSuccessMessage('Paramètres d\'affichage mis à jour avec succès');
+    this.notificationService.success('Paramètres d\'affichage mis à jour avec succès');
   }
   
   updateWithdrawalRules(): void {
-    if (this.withdrawalRulesForm.invalid) return;
+    if (this.withdrawalRulesForm.invalid) {
+      this.notificationService.warning('Veuillez corriger les erreurs dans le formulaire.');
+      return;
+    }
     
     // In a real app, we would save this to the backend
-    this.showSuccessMessage('Règles de retrait mises à jour avec succès');
+    this.notificationService.success('Règles de retrait mises à jour avec succès');
   }
   
+  // Cette méthode n'est plus nécessaire car nous utilisons le service de notification
+  // Elle est conservée pour compatibilité avec d'autres parties du code qui pourraient l'utiliser
   private showSuccessMessage(message: string): void {
-    // In a real app, we would use a proper notification system
-    alert(message);
+    this.notificationService.success(message);
   }
 }

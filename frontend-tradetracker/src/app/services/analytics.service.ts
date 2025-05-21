@@ -65,12 +65,7 @@ export class AnalyticsService {
   }
 
   getAccountPerformance(accountId: string): Observable<number> {
-    // Utiliser les données mockées pour une réponse plus rapide
-    if (this.mockPerformanceData[accountId]) {
-      return of(this.mockPerformanceData[accountId]);
-    }
-    
-    // Sinon, calculer normalement
+    // Calculer en temps réel pour toujours avoir les données à jour
     return this.accountService.getAccountById(accountId).pipe(
       map(account => {
         if (!account) return 0;

@@ -23,6 +23,8 @@ export class AccountService {
       withdrawalThreshold: 13000,
       totalDeposits: 10000,
       totalWithdrawals: 2000,
+      totalProfits: 5000,
+      totalLosses: 550,
       createdAt: new Date('2024-01-15'),
       updatedAt: new Date('2025-04-28')
     },
@@ -36,6 +38,8 @@ export class AccountService {
       withdrawalThreshold: 9000,
       totalDeposits: 7500,
       totalWithdrawals: 1000,
+      totalProfits: 2500,
+      totalLosses: 250,
       createdAt: new Date('2024-02-10'),
       updatedAt: new Date('2025-05-15')
     },
@@ -49,6 +53,8 @@ export class AccountService {
       withdrawalThreshold: 4000,
       totalDeposits: 3000,
       totalWithdrawals: 0,
+      totalProfits: 500,
+      totalLosses: 300,
       createdAt: new Date('2024-03-05'),
       updatedAt: new Date('2025-05-10')
     },
@@ -62,6 +68,8 @@ export class AccountService {
       withdrawalThreshold: 5500,
       totalDeposits: 5000,
       totalWithdrawals: 500,
+      totalProfits: 800,
+      totalLosses: 150,
       createdAt: new Date('2024-04-20'),
       updatedAt: new Date('2025-05-18')
     },
@@ -75,6 +83,8 @@ export class AccountService {
       withdrawalThreshold: 8500,
       totalDeposits: 6000,
       totalWithdrawals: 0,
+      totalProfits: 2200,
+      totalLosses: 380,
       createdAt: new Date('2024-05-01'),
       updatedAt: new Date('2025-05-19')
     }

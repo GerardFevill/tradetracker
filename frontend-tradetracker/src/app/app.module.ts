@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing.module';
@@ -13,12 +14,15 @@ import { AddAccountComponent } from './components/add-account/add-account.compon
 import { TransactionsComponent } from './components/transactions/transactions.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { TransferComponent } from './components/transfer/transfer.component';
+import { NotificationComponent } from './components/notification/notification.component';
 
 // Services
 import { AccountService } from './services/account.service';
 import { TransactionService } from './services/transaction.service';
 import { AnalyticsService } from './services/analytics.service';
+import { NotificationService } from './services/notification.service';
 import { mockApiProvider } from './services/mock-api.service';
+import { WithdrawalSettingsComponent } from './components/withdrawal-settings/withdrawal-settings.component';
 
 @NgModule({
   declarations: [
@@ -29,10 +33,13 @@ import { mockApiProvider } from './services/mock-api.service';
     AddAccountComponent,
     TransactionsComponent,
     SettingsComponent,
-    TransferComponent
+    TransferComponent,
+    NotificationComponent,
+    WithdrawalSettingsComponent
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
@@ -42,6 +49,7 @@ import { mockApiProvider } from './services/mock-api.service';
     AccountService,
     TransactionService,
     AnalyticsService,
+    NotificationService,
     mockApiProvider
   ],
   bootstrap: [AppComponent]

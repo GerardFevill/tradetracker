@@ -153,6 +153,20 @@
   cursor: not-allowed;
 }
 
+.advanced-settings-link {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.advanced-settings-link .btn {
+  margin-bottom: 10px;
+}
+
+.advanced-settings-link .help-text {
+  margin-bottom: 0;
+}
+
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;

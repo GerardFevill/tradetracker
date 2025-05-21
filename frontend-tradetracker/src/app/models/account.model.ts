@@ -11,6 +11,8 @@ export interface Account {
   withdrawalThreshold: number;
   totalDeposits: number;
   totalWithdrawals: number;
+  totalProfits: number;
+  totalLosses: number;
   createdAt: Date;
   updatedAt: Date;
 }

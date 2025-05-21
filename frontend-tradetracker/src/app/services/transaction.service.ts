@@ -21,7 +21,8 @@ export class TransactionService {
       amount: 5000,
       currency: 'USD',
       date: new Date('2024-01-20'),
-      description: 'Dépôt initial'
+      description: 'Dépôt initial',
+      source: 'Virement bancaire'
     },
     {
       id: '2',
@@ -30,7 +31,8 @@ export class TransactionService {
       amount: 3000,
       currency: 'USD',
       date: new Date('2024-02-15'),
-      description: 'Ajout de fonds'
+      description: 'Ajout de fonds',
+      source: 'Épargne personnelle'
     },
     {
       id: '3',
@@ -39,7 +41,8 @@ export class TransactionService {
       amount: 1000,
       currency: 'USD',
       date: new Date('2024-03-10'),
-      description: 'Retrait de bénéfices'
+      description: 'Retrait de bénéfices',
+      source: 'Compte d\'investissement'
     },
     {
       id: '4',
@@ -48,7 +51,8 @@ export class TransactionService {
       amount: 4000,
       currency: 'EUR',
       date: new Date('2024-02-20'),
-      description: 'Dépôt initial'
+      description: 'Dépôt initial',
+      source: 'Compte bancaire principal'
     },
     {
       id: '5',

@@ -7,6 +7,7 @@ import { AddAccountComponent } from './components/add-account/add-account.compon
 import { TransactionsComponent } from './components/transactions/transactions.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { TransferComponent } from './components/transfer/transfer.component';
+import { WithdrawalSettingsComponent } from './components/withdrawal-settings/withdrawal-settings.component';
 
 const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -17,6 +18,7 @@ const routes: Routes = [
   { path: 'transactions', component: TransactionsComponent },
   { path: 'transfer', component: TransferComponent },
   { path: 'settings', component: SettingsComponent },
+  { path: 'withdrawal-settings', component: WithdrawalSettingsComponent },
   { path: '**', redirectTo: '/dashboard' }
 ];
 

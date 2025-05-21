@@ -91,6 +91,10 @@
     <h3>Règles de Retrait Automatique</h3>
     <div class="card">
       <div class="card-body">
+        <div class="advanced-settings-link">
+          <a routerLink="/withdrawal-settings" class="btn btn-outline-primary">Paramètres avancés de retrait</a>
+          <p class="help-text">Configurez les plages de capital et les pourcentages de retrait en fonction de la progression vers l'objectif.</p>
+        </div>
         <form [formGroup]="withdrawalRulesForm" (ngSubmit)="updateWithdrawalRules()">
           <div class="form-group checkbox-group">
             <div class="checkbox-item">

@@ -6,7 +6,7 @@
         {{ account.currency }}
       </span>
     </div>
-    <button class="btn btn-secondary" routerLink="/accounts">Retour aux comptes</button>
+    <button class="btn btn-secondary" routerLink="/accounts"><i class="fas fa-arrow-left mr-2"></i>Retour aux comptes</button>
   </div>
   
   <div class="account-overview">
@@ -21,9 +21,33 @@
           <span class="label">Solde actuel:</span>
           <span class="value">{{ account.currentBalance | currency:account.currency }}</span>
         </div>
-        <div class="info-row">
+        <div class="info-row target-balance-row">
           <span class="label">Objectif:</span>
-          <span class="value">{{ account.targetBalance | currency:account.currency }}</span>
+          <div class="editable-value">
+            <span class="value" *ngIf="!showTargetForm">{{ account.targetBalance | currency:account.currency }}</span>
+            <button class="edit-btn" *ngIf="!showTargetForm" (click)="showTargetForm = true">
+              <i class="fas fa-edit edit-icon"></i>
+            </button>
+            <form [formGroup]="targetForm" (ngSubmit)="updateTargetBalance(); showTargetForm = false" *ngIf="showTargetForm" class="inline-form">
+              <div class="form-input-group">
+                <input 
+                  type="number" 
+                  formControlName="targetBalance"
+                  class="form-control"
+                  [ngClass]="{'invalid': targetForm.get('targetBalance')?.invalid && targetForm.get('targetBalance')?.touched}"
+                  step="100"
+                >
+                <span class="currency-label">{{ account.currency }}</span>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-sm btn-primary" [disabled]="targetForm.invalid">Enregistrer</button>
+                <button type="button" class="btn btn-sm btn-secondary" (click)="showTargetForm = false">Annuler</button>
+              </div>
+              <div class="error-message" *ngIf="targetForm.get('targetBalance')?.invalid && targetForm.get('targetBalance')?.touched">
+                L'objectif doit être d'au moins 100 {{ account.currency }}.
+              </div>
+            </form>
+          </div>
         </div>
         <div class="info-row">
           <span class="label">Dépôts totaux:</span>
@@ -32,6 +56,14 @@
         <div class="info-row">
           <span class="label">Retraits totaux:</span>
           <span class="value">{{ account.totalWithdrawals | currency:account.currency }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Profits totaux:</span>
+          <span class="value positive">{{ account.totalProfits || 0 | currency:account.currency }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Pertes totales:</span>
+          <span class="value negative">{{ account.totalLosses || 0 | currency:account.currency }}</span>
         </div>
         <div class="info-row">
           <span class="label">Date de création:</span>
@@ -76,57 +108,109 @@
   
   <div class="withdrawal-section">
     <div class="card">
-      <div class="card-header">Gestion du Seuil de Retrait</div>
+      <div class="card-header">
+        <div class="header-with-action">
+          <span>Stratégie de Retrait Intelligent</span>
+          <a routerLink="/withdrawal-settings" class="settings-link">
+            <i class="fas fa-cog"></i> Paramètres
+          </a>
+        </div>
+      </div>
       <div class="card-body">
-        <div class="info-row">
-          <span class="label">Seuil actuel:</span>
-          <span class="value">{{ account.withdrawalThreshold | currency:account.currency }}</span>
-        </div>
-        
-        <div *ngIf="(withdrawalSuggestion$ | async) ?? 0 > 0" class="suggestion-alert">
-          <div class="alert-icon">⚠️</div>
-          <div class="alert-content">
-            <strong>Retrait suggéré:</strong>
-            <p>Votre compte a dépassé le seuil de retrait. Nous suggérons un retrait de {{ withdrawalSuggestion$ | async | currency:account.currency }}.</p>
-          </div>
-        </div>
-        
-        <form [formGroup]="thresholdForm" (ngSubmit)="updateThreshold()" class="threshold-form">
-          <div class="form-group">
-            <label for="withdrawalThreshold">Nouveau seuil de retrait:</label>
-            <input 
-              type="number" 
-              id="withdrawalThreshold" 
-              formControlName="withdrawalThreshold"
-              class="form-control"
-              [ngClass]="{'invalid': thresholdForm.get('withdrawalThreshold')?.invalid && thresholdForm.get('withdrawalThreshold')?.touched}"
-            >
-            <div class="error-message" *ngIf="thresholdForm.get('withdrawalThreshold')?.invalid && thresholdForm.get('withdrawalThreshold')?.touched">
-              Le seuil doit être un nombre positif.
+        <div *ngIf="(withdrawalRecommendation$ | async) as recommendation" class="smart-withdrawal-section">
+          <!-- Informations financières principales -->
+          <div class="withdrawal-info-grid">
+            <div class="info-box">
+              <div class="info-box-label">Dépôt total</div>
+              <div class="info-box-value">{{ account.totalDeposits | currency:account.currency }}</div>
+            </div>
+            
+            <div class="info-box">
+              <div class="info-box-label">Gain total</div>
+              <div class="info-box-value positive">{{ account.currentBalance - account.totalDeposits | currency:account.currency }}</div>
+            </div>
+            
+            <div class="info-box highlight">
+              <div class="info-box-label">Montant à retirer</div>
+              <div class="info-box-value accent">{{ recommendation.recommendedAmount | currency:account.currency }}</div>
+              <div class="info-box-subtitle">({{ recommendation.appliedRule.profitPercentageToWithdraw }}% des profits)</div>
+            </div>
+            
+            <div class="info-box">
+              <div class="info-box-label">Solde après retrait</div>
+              <div class="info-box-value">{{ recommendation.remainingBalance | currency:account.currency }}</div>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary" [disabled]="thresholdForm.invalid">Mettre à jour</button>
-        </form>
+          
+          <!-- Information sur la plage de capital applicable -->
+          <div class="applied-range-info">
+            <h4>Plage de capital applicable</h4>
+            <div class="range-details">
+              <div class="range-amount">
+                {{ recommendation.appliedRange.minAmount | currency:account.currency }} - {{ recommendation.appliedRange.maxAmount | currency:account.currency }}
+              </div>
+              <div class="range-rules">
+                <div class="rule-title">Règles de retrait :</div>
+                <div class="rule-list">
+                  <div class="rule-item" *ngFor="let rule of recommendation.appliedRange.withdrawalRules" 
+                       [ngClass]="{'active-rule': rule.targetPercentage === recommendation.appliedRule.targetPercentage}">
+                    <span class="rule-target">{{ rule.targetPercentage }}% de l'objectif :</span>
+                    <span class="rule-action">Retirer {{ rule.profitPercentageToWithdraw }}% des profits</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Bouton d'action -->
+          <div class="withdrawal-action">
+            <button type="button" class="btn btn-withdrawal" (click)="toggleTransactionForm('withdrawal', recommendation.recommendedAmount, 'Retrait intelligent recommandé', true)">
+              <i class="fas fa-hand-holding-usd action-icon"></i>Effectuer ce retrait
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Aucune recommandation disponible -->
+    <div class="card" *ngIf="!(withdrawalRecommendation$ | async)">
+      <div class="card-header">
+        <div class="header-with-action">
+          <span>Stratégie de Retrait Intelligent</span>
+          <a routerLink="/withdrawal-settings" class="settings-link">
+            <i class="fas fa-cog"></i> Paramètres
+          </a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="no-recommendation">
+          <p>Aucune recommandation de retrait disponible pour le moment. Cela peut être dû à :</p>
+          <ul>
+            <li>Pas encore de profits suffisants</li>
+            <li>Objectif de compte non défini ou trop élevé</li>
+            <li>Progression insuffisante vers l'objectif</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
   
-  <div class="transactions-section">
+  <div id="transactions-section" class="transactions-section">
     <div class="section-header">
-      <h3>Historique des Transactions</h3>
-      <button class="btn btn-primary" (click)="toggleTransactionForm()">
-        {{ showTransactionForm ? 'Annuler' : 'Ajouter une Transaction' }}
-      </button>
+      <h3 id="transactions-title">Historique des Transactions</h3>
+      <button class="btn btn-primary add-transaction-btn" (click)="toggleTransactionForm('deposit', 0, '', true)" *ngIf="!showTransactionForm"><i class="fas fa-plus-circle mr-2"></i>Ajouter une transaction</button>
     </div>
     
-    <div class="transaction-form-container" *ngIf="showTransactionForm">
+    <div id="transaction-form" class="transaction-form-container" *ngIf="showTransactionForm">
       <form [formGroup]="transactionForm" (ngSubmit)="addTransaction()" class="transaction-form">
         <div class="form-group">
           <label for="type">Type de transaction:</label>
-          <select id="type" formControlName="type" class="form-control">
+          <select id="type" formControlName="type" class="form-control" [ngClass]="{'invalid': transactionForm.get('type')?.invalid && transactionForm.get('type')?.touched}">
             <option value="deposit">Dépôt</option>
             <option value="withdrawal">Retrait</option>
             <option value="transfer">Transfert</option>
+            <option value="profit">Gain de trading</option>
+            <option value="loss">Perte de trading</option>
           </select>
         </div>
         
@@ -149,9 +233,29 @@
           <textarea id="description" formControlName="description" class="form-control"></textarea>
         </div>
         
+        <!-- Champ pour l'origine des fonds (uniquement pour dépôts et retraits) -->
+        <div class="form-group" *ngIf="transactionForm.get('type')?.value === 'deposit' || transactionForm.get('type')?.value === 'withdrawal'">
+          <label for="source">Origine des fonds:</label>
+          <input id="source" formControlName="source" class="form-control" placeholder="Ex: Virement bancaire, PayPal, etc.">
+        </div>
+        
+        <!-- Champ pour sélectionner le compte de destination (uniquement pour les transferts) -->
+        <div class="form-group" *ngIf="transactionForm.get('type')?.value === 'transfer'">
+          <label for="targetAccountId">Compte de destination:</label>
+          <select id="targetAccountId" formControlName="targetAccountId" class="form-control" [ngClass]="{'invalid': transactionForm.get('targetAccountId')?.invalid && transactionForm.get('targetAccountId')?.touched}">
+            <option value="">Sélectionnez un compte</option>
+            <option *ngFor="let acc of (availableAccounts$ | async)" [value]="acc.id" [disabled]="acc.id === (account$ | async)?.id">
+              {{ acc.name }} ({{ acc.currency }})
+            </option>
+          </select>
+          <div class="error-message" *ngIf="transactionForm.get('targetAccountId')?.invalid && transactionForm.get('targetAccountId')?.touched">
+            Veuillez sélectionner un compte de destination.
+          </div>
+        </div>
+        
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="toggleTransactionForm()">Annuler</button>
-          <button type="submit" class="btn btn-primary" [disabled]="transactionForm.invalid">Enregistrer</button>
+          <button type="button" class="btn btn-secondary" (click)="toggleTransactionForm()"><i class="fas fa-times mr-2"></i>Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="transactionForm.invalid"><i class="fas fa-save mr-2"></i>Enregistrer</button>
         </div>
       </form>
     </div>
@@ -165,15 +269,17 @@
         <div class="transaction-icon" [ngClass]="{
           'deposit-icon': transaction.type === 'deposit',
           'withdrawal-icon': transaction.type === 'withdrawal',
-          'transfer-icon': transaction.type === 'transfer'
+          'transfer-icon': transaction.type === 'transfer',
+          'profit-icon': transaction.type === 'profit',
+          'loss-icon': transaction.type === 'loss'
         }">
-          <i class="icon">
-            {{ 
-              transaction.type === 'deposit' ? '↑' : 
-              transaction.type === 'withdrawal' ? '↓' : 
-              '↔'
-            }}
-          </i>
+          <i class="{{ 
+              transaction.type === 'deposit' ? 'fas fa-arrow-up' : 
+              transaction.type === 'withdrawal' ? 'fas fa-arrow-down' : 
+              transaction.type === 'transfer' ? 'fas fa-exchange-alt' :
+              transaction.type === 'profit' ? 'fas fa-chart-line' :
+              'fas fa-chart-line fa-flip-vertical'
+            }}"></i>
         </div>
         
         <div class="transaction-details">
@@ -182,18 +288,20 @@
               {{ 
                 transaction.type === 'deposit' ? 'Dépôt' : 
                 transaction.type === 'withdrawal' ? 'Retrait' : 
-                'Transfert' 
+                transaction.type === 'transfer' ? 'Transfert' :
+                transaction.type === 'profit' ? 'Gain de trading' :
+                'Perte de trading'
               }}
             </span>
             <span class="transaction-date">{{ transaction.date | date:'dd/MM/yyyy HH:mm' }}</span>
           </div>
           
           <div class="transaction-amount" [ngClass]="{
-            'positive': transaction.type === 'deposit',
-            'negative': transaction.type === 'withdrawal',
+            'positive': transaction.type === 'deposit' || transaction.type === 'profit',
+            'negative': transaction.type === 'withdrawal' || transaction.type === 'loss',
             'transfer': transaction.type === 'transfer'
           }">
-            {{ transaction.type === 'deposit' ? '+' : transaction.type === 'withdrawal' ? '-' : '' }} 
+            {{ transaction.type === 'deposit' || transaction.type === 'profit' ? '+' : transaction.type === 'withdrawal' || transaction.type === 'loss' ? '-' : '' }} 
             {{ transaction.amount | currency:transaction.currency }}
             <span *ngIf="transaction.type === 'transfer' && transaction.targetAccountId" class="transfer-info">
               {{ transaction.accountId === account.id ? 'vers' : 'depuis' }} 
@@ -206,6 +314,11 @@
           
           <div class="transaction-description" *ngIf="transaction.description">
             {{ transaction.description }}
+          </div>
+          
+          <!-- Affichage de l'origine des fonds pour les dépôts et retraits -->
+          <div class="transaction-source" *ngIf="transaction.source && transaction.type !== 'transfer'">
+            <strong>Origine:</strong> {{ transaction.source }}
           </div>
         </div>
       </div>

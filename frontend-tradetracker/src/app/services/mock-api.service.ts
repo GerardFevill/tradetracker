@@ -17,6 +17,8 @@ const accounts: Account[] = [
     withdrawalThreshold: 5000,
     totalDeposits: 3000,
     totalWithdrawals: 500,
+    totalProfits: 3000,
+    totalLosses: 260,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2025-04-10')
   },
@@ -30,6 +32,8 @@ const accounts: Account[] = [
     withdrawalThreshold: 3500,
     totalDeposits: 2500,
     totalWithdrawals: 0,
+    totalProfits: 1500,
+    totalLosses: 150,
     createdAt: new Date('2024-03-05'),
     updatedAt: new Date('2025-05-01')
   },
@@ -43,6 +47,8 @@ const accounts: Account[] = [
     withdrawalThreshold: 1000,
     totalDeposits: 1000,
     totalWithdrawals: 0,
+    totalProfits: 300,
+    totalLosses: 100,
     createdAt: new Date('2025-01-10'),
     updatedAt: new Date('2025-05-15')
   }
@@ -125,6 +131,8 @@ export class MockApiInterceptor implements HttpInterceptor {
           const newAccount: Account = {
             ...body,
             id: (accounts.length + 1).toString(),
+            totalProfits: body.totalProfits || 0,
+            totalLosses: body.totalLosses || 0,
             createdAt: new Date(),
             updatedAt: new Date()
           };

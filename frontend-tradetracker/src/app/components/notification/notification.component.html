@@ -1,0 +1,18 @@
+<div class="notification-container">
+  <div 
+    *ngFor="let notification of notifications" 
+    class="notification" 
+    [ngClass]="notification.type"
+    [@notificationAnimation]="'visible'"
+  >
+    <div class="notification-icon">
+      <i [class]="getIconClass(notification.type)"></i>
+    </div>
+    <div class="notification-content">
+      <div class="notification-message">{{ notification.message }}</div>
+    </div>
+    <button class="notification-close" (click)="removeNotification(notification.id)">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+</div>
