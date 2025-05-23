@@ -18,7 +18,12 @@
   </div>
   
   <div class="summary-section" *ngIf="accountSummary$ | async as summary">
-    <h3 class="section-title">Résumé des comptes</h3>
+    <h3 class="section-title">
+      <svg class="section-icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+        <path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v12.5A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25Zm11.75 3.75h-3.5a.75.75 0 0 1 0-1.5h3.5a.75.75 0 0 1 0 1.5ZM9 8.25a.75.75 0 0 1 0 1.5H2.5a.75.75 0 0 1 0-1.5Zm4.5 0a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5Zm-10 3a.75.75 0 0 1 0 1.5H2a.75.75 0 0 1 0-1.5Zm10.25.75a.75.75 0 0 1-.75-.75c0-.179.063-.345.17-.48a.748.748 0 0 1 1.32.48.75.75 0 0 1-.74.75Z"></path>
+      </svg>
+      Résumé des comptes
+    </h3>
     <div class="summary-cards">
       <div class="card summary-card">
         <div class="card-icon accounts-icon">
@@ -73,6 +78,62 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Section pour le résumé des comptes actifs/inactifs -->
+    <div class="account-status-section">
+      <h3 class="section-title">
+        <svg class="section-icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+          <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm10.28-1.72-4.5 4.5a.75.75 0 0 1-1.06 0l-2-2a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l1.47 1.47 3.97-3.97a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z"></path>
+        </svg>
+        Statut des comptes
+      </h3>
+      <div class="row status-cards-row">
+        <!-- Comptes actifs -->
+        <div class="col-md-4">
+          <app-account-status-card
+            title="Comptes actifs"
+            [accountsCount$]="activeAccountsCount$"
+            [depositsUSD$]="activeAccountsTotalDepositsUSD$"
+            [depositsEUR$]="activeAccountsTotalDepositsEUR$"
+            [balanceUSD$]="activeAccountsBalanceUSD$"
+            [balanceEUR$]="activeAccountsBalanceEUR$"
+            [netResultUSD$]="activeAccountsNetResultUSD$"
+            [netResultEUR$]="activeAccountsNetResultEUR$"
+            cardClass="active-card">
+          </app-account-status-card>
+        </div>
+        
+        <!-- Comptes inactifs -->
+        <div class="col-md-4">
+          <app-account-status-card
+            title="Comptes inactifs"
+            [accountsCount$]="inactiveAccountsCount$"
+            [depositsUSD$]="inactiveAccountsTotalDepositsUSD$"
+            [depositsEUR$]="inactiveAccountsTotalDepositsEUR$"
+            [balanceUSD$]="inactiveAccountsBalanceUSD$"
+            [balanceEUR$]="inactiveAccountsBalanceEUR$"
+            [netResultUSD$]="inactiveAccountsNetResultUSD$"
+            [netResultEUR$]="inactiveAccountsNetResultEUR$"
+            cardClass="inactive-card">
+          </app-account-status-card>
+        </div>
+        
+        <!-- Total des comptes -->
+        <div class="col-md-4">
+          <app-account-status-card
+            title="Total des comptes"
+            [accountsCount$]="totalAccountsCount$"
+            [depositsUSD$]="totalDepositsUSD$"
+            [depositsEUR$]="totalDepositsEUR$"
+            [balanceUSD$]="totalBalanceUSD$"
+            [balanceEUR$]="totalBalanceEUR$"
+            [netResultUSD$]="totalNetResultUSD$"
+            [netResultEUR$]="totalNetResultEUR$"
+            cardClass="total-card">
+          </app-account-status-card>
         </div>
       </div>
     </div>
@@ -146,7 +207,7 @@
     </div>
   </div>
 
-  <!-- Nouvelle section pour les graphiques -->
+  <!-- Section d'analyse graphique mise à jour -->
   <div class="charts-section">
     <h3 class="section-title">
       <svg class="section-icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
@@ -155,52 +216,11 @@
       Analyse Graphique
     </h3>
 
-    <div class="charts-container">
-      <!-- Graphique d'évolution des soldes -->
-      <div class="card chart-card balance-history-chart">
-        <div class="card-header">Évolution des Soldes</div>
-        <div class="card-body">
-          <div class="chart-container">
-            <div class="chart-legend">
-              <div class="legend-item">
-                <span class="legend-color usd-color"></span>
-                <span>USD</span>
-              </div>
-              <div class="legend-item">
-                <span class="legend-color eur-color"></span>
-                <span>EUR</span>
-              </div>
-            </div>
-            <div class="bar-chart">
-              <div class="y-axis">
-                <div class="y-label">15K</div>
-                <div class="y-label">10K</div>
-                <div class="y-label">5K</div>
-                <div class="y-label">0</div>
-              </div>
-              <div class="bars-container">
-                <!-- Lignes horizontales de la grille -->
-                <div class="grid-line" style="bottom: 25%;"></div>
-                <div class="grid-line" style="bottom: 50%;"></div>
-                <div class="grid-line" style="bottom: 75%;"></div>
-                <div class="grid-line" style="bottom: 100%;"></div>
-                
-                <!-- Groupes de barres par mois -->
-                <div class="month-group" *ngFor="let data of balanceHistory">
-                  <div class="bar-group">
-                    <div class="bar usd-bar" [style.height.%]="(data.usd / 15000) * 100">
-                      <div class="bar-value">{{ data.usd | currency:'USD':'symbol':'1.0-0' }}</div>
-                    </div>
-                    <div class="bar eur-bar" [style.height.%]="(data.eur / 15000) * 100">
-                      <div class="bar-value">{{ data.eur | currency:'EUR':'symbol':'1.0-0' }}</div>
-                    </div>
-                  </div>
-                  <div class="x-label">{{ data.month }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Sous-composants graphiques -->
+    <div class="dashboard-charts">
+      <!-- Graphique d'évolution des soldes (sous-composant) -->
+      <div class="chart-component">
+        <app-balance-history></app-balance-history>
       </div>
 
       <!-- Graphiques en secteurs -->

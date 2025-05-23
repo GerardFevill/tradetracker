@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AppRoutingModule } from './app-routing.module';
 
@@ -15,14 +15,20 @@ import { TransactionsComponent } from './components/transactions/transactions.co
 import { SettingsComponent } from './components/settings/settings.component';
 import { TransferComponent } from './components/transfer/transfer.component';
 import { NotificationComponent } from './components/notification/notification.component';
+import { AccountStatusCardComponent } from './components/account-status-card/account-status-card.component';
 
 // Services
 import { AccountService } from './services/account.service';
 import { TransactionService } from './services/transaction.service';
 import { AnalyticsService } from './services/analytics.service';
 import { NotificationService } from './services/notification.service';
-import { mockApiProvider } from './services/mock-api.service';
+import { HttpErrorInterceptor } from './services/http-error.interceptor';
+// Le mock API a été supprimé pour utiliser le vrai backend
 import { WithdrawalSettingsComponent } from './components/withdrawal-settings/withdrawal-settings.component';
+
+// Pipes
+import { FilterPipe } from './pipes/filter.pipe';
+import { BalanceHistoryComponent } from './components/balance-history/balance-history.component';
 
 @NgModule({
   declarations: [
@@ -35,7 +41,10 @@ import { WithdrawalSettingsComponent } from './components/withdrawal-settings/wi
     SettingsComponent,
     TransferComponent,
     NotificationComponent,
-    WithdrawalSettingsComponent
+    WithdrawalSettingsComponent,
+    AccountStatusCardComponent,
+    FilterPipe,
+    BalanceHistoryComponent
   ],
   imports: [
     BrowserModule,
@@ -50,7 +59,11 @@ import { WithdrawalSettingsComponent } from './components/withdrawal-settings/wi
     TransactionService,
     AnalyticsService,
     NotificationService,
-    mockApiProvider
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: HttpErrorInterceptor,
+      multi: true
+    }
   ],
   bootstrap: [AppComponent]
 })

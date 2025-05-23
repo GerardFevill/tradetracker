@@ -10,6 +10,7 @@
         <button class="btn" [class.active]="selectedType === 'all'" (click)="filterByType('all')">Tous</button>
         <button class="btn" [class.active]="selectedType === 'deposit'" (click)="filterByType('deposit')">Dépôts</button>
         <button class="btn" [class.active]="selectedType === 'withdrawal'" (click)="filterByType('withdrawal')">Retraits</button>
+        <button class="btn" [class.active]="selectedType === 'transfer'" (click)="filterByType('transfer')">Transferts</button>
       </div>
     </div>
     
@@ -59,15 +60,26 @@
     
     <div class="transaction-item" *ngFor="let transaction of transactions">
       <div class="transaction-icon" [ngClass]="{
-        'deposit-icon': transaction.type === 'deposit',
-        'withdrawal-icon': transaction.type === 'withdrawal'
+        'deposit-icon': transaction.type === 'deposit' || (transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId && selectedAccountId !== 'all'),
+        'withdrawal-icon': transaction.type === 'withdrawal' || (transaction.type === 'transfer' && transaction.accountId === selectedAccountId),
+        'transfer-icon': transaction.type === 'transfer' && selectedAccountId === 'all'
       }">
-        <i class="icon">{{ transaction.type === 'deposit' ? '↑' : '↓' }}</i>
+        <i class="icon">{{ 
+          transaction.type === 'deposit' ? '↑' : 
+          transaction.type === 'withdrawal' ? '↓' : 
+          transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId ? '↑' :
+          transaction.type === 'transfer' && transaction.accountId === selectedAccountId ? '↓' : '↔'
+        }}</i>
       </div>
       
       <div class="transaction-details">
         <div class="transaction-header">
-          <span class="transaction-type">{{ transaction.type === 'deposit' ? 'Dépôt' : 'Retrait' }}</span>
+          <span class="transaction-type">{{ 
+            transaction.type === 'deposit' ? 'Dépôt' : 
+            transaction.type === 'withdrawal' ? 'Retrait' : 
+            transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId ? 'Transfert entrant' :
+            transaction.type === 'transfer' && transaction.accountId === selectedAccountId ? 'Transfert sortant' : 'Transfert'
+          }}</span>
           <span class="transaction-date">{{ transaction.date | date:'dd/MM/yyyy HH:mm' }}</span>
         </div>
         
@@ -79,10 +91,14 @@
         </div>
         
         <div class="transaction-amount" [ngClass]="{
-          'positive': transaction.type === 'deposit',
-          'negative': transaction.type === 'withdrawal'
+          'positive': transaction.type === 'deposit' || (transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId),
+          'negative': transaction.type === 'withdrawal' || (transaction.type === 'transfer' && transaction.accountId === selectedAccountId && transaction.targetAccountId !== selectedAccountId),
+          'neutral': transaction.type === 'transfer' && selectedAccountId === 'all'
         }">
-          {{ transaction.type === 'deposit' ? '+' : '-' }} {{ transaction.amount | currency:transaction.currency }}
+          {{ 
+            (transaction.type === 'deposit' || (transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId)) ? '+' : 
+            (transaction.type === 'withdrawal' || (transaction.type === 'transfer' && transaction.accountId === selectedAccountId && transaction.targetAccountId !== selectedAccountId)) ? '-' : ''
+          }} {{ transaction.amount | currency:transaction.currency }}
         </div>
         
         <div class="transaction-description" *ngIf="transaction.description">
@@ -92,6 +108,7 @@
       
       <div class="transaction-actions">
         <button class="btn btn-primary" [routerLink]="['/accounts', transaction.accountId]">Voir le compte</button>
+        <button class="btn btn-danger" (click)="deleteTransaction(transaction)">Supprimer</button>
       </div>
     </div>
   </div>

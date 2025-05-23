@@ -62,7 +62,7 @@ export class AddAccountComponent implements OnInit {
     
     const newAccount = {
       name: formValue.name,
-      broker,
+      broker: broker,
       currency: formValue.currency,
       currentBalance: formValue.currentBalance,
       targetBalance: formValue.targetBalance,
@@ -70,7 +70,9 @@ export class AddAccountComponent implements OnInit {
       totalDeposits: formValue.currentBalance, // Initial deposit equals current balance
       totalWithdrawals: 0,
       totalProfits: 0, // Nouveau compte, pas encore de profits
-      totalLosses: 0 // Nouveau compte, pas encore de pertes
+      totalLosses: 0, // Nouveau compte, pas encore de pertes
+      isActive: true // Par défaut, les nouveaux comptes sont actifs
+      // La date de création est gérée par le backend
     };
     
     this.accountService.createAccount(newAccount).subscribe(account => {

@@ -18,6 +18,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 })
 export class AccountDetailComponent implements OnInit {
   account$!: Observable<Account | undefined>;
+  account: Account | undefined;
   transactions$!: Observable<Transaction[]>;
   performance$!: Observable<number>;
   profitLoss$!: Observable<number>;
@@ -37,8 +38,13 @@ export class AccountDetailComponent implements OnInit {
   showTransactionForm = false;
   showTargetForm = false;
   
+  // Mode d'édition pour le formulaire de transaction
+  isEditMode = false;
+  currentTransactionId: string | null = null;
+  
   // Pour stocker les noms des comptes pour les transferts
   private accountNames: {[id: string]: string} = {};
+  accounts: Account[] = [];
   
   constructor(
     private route: ActivatedRoute,
@@ -123,20 +129,20 @@ export class AccountDetailComponent implements OnInit {
     
     this.account$ = this.accountService.getAccountById(accountId).pipe(
       tap(account => {
-        if (!account) {
-          this.router.navigate(['/accounts']);
-          return;
+        if (account) {
+          // Stocker l'instance du compte pour un accès facile
+          this.account = account;
+          
+          // Initialiser le formulaire de seuil avec les valeurs actuelles
+          this.thresholdForm = this.fb.group({
+            threshold: [account.withdrawalThreshold || 0, [Validators.required, Validators.min(0)]]
+          });
+          
+          // Initialiser le formulaire d'objectif avec les valeurs actuelles
+          this.targetForm = this.fb.group({
+            targetBalance: [account.targetBalance || 0, [Validators.required, Validators.min(0)]]
+          });
         }
-        
-        // Initialize the threshold form with current threshold value
-        this.thresholdForm = this.fb.group({
-          withdrawalThreshold: [account.withdrawalThreshold, [Validators.required, Validators.min(0)]]
-        });
-        
-        // Initialize the target form with current target balance
-        this.targetForm = this.fb.group({
-          targetBalance: [account.targetBalance, [Validators.required, Validators.min(100)]]
-        });
       })
     );
     
@@ -150,23 +156,28 @@ export class AccountDetailComponent implements OnInit {
     this.withdrawalRecommendation$ = this.withdrawalStrategyService.getWithdrawalRecommendation(accountId);
     
     // Initialize transaction form
+    this.initTransactionForm();
+  }
+  
+  initTransactionForm(): void {
     this.transactionForm = this.fb.group({
       type: ['deposit', Validators.required],
-      amount: [0, [Validators.required, Validators.min(0.01)]],
+      amount: ['', [Validators.required, Validators.min(0.01)]],
+      finalBalance: [''],
       description: [''],
-      source: [''], // Nouveau champ pour l'origine des fonds
-      targetAccountId: [''] // Champ pour le compte de destination lors d'un transfert
+      source: [''],
+      targetAccountId: [''],
+      date: [new Date().toISOString().slice(0, 16), Validators.required] // Format YYYY-MM-DDThh:mm
     });
     
-    // Observer les changements du type de transaction pour ajouter/supprimer la validation du compte de destination
+    // Observer les changements du type de transaction
     this.transactionForm.get('type')?.valueChanges.subscribe(type => {
-      const targetAccountControl = this.transactionForm.get('targetAccountId');
-      if (type === 'transfer') {
-        targetAccountControl?.setValidators([Validators.required]);
-      } else {
-        targetAccountControl?.clearValidators();
+      // Si le type change vers profit ou loss, initialiser le solde final avec le solde actuel
+      if (type === 'profit' || type === 'loss') {
+        if (this.account) {
+          this.transactionForm.get('finalBalance')?.setValue(this.account.currentBalance);
+        }
       }
-      targetAccountControl?.updateValueAndValidity();
     });
   }
   
@@ -232,19 +243,39 @@ export class AccountDetailComponent implements OnInit {
    * @param scroll Indique s'il faut défiler jusqu'au formulaire (optionnel)
    */
   toggleTransactionForm(type?: string, amount?: number, description?: string, scroll: boolean = true): void {
-    this.showTransactionForm = !this.showTransactionForm;
-    
+    // Si on ferme le formulaire, réinitialiser le mode d'édition
     if (this.showTransactionForm) {
-      // Valeurs par défaut
-      const defaultValues = { 
-        type: type || 'deposit', 
-        amount: amount || 0, 
-        description: description || '', 
-        source: '' 
-      };
-      
-      // Réinitialiser le formulaire avec les valeurs spécifiées ou par défaut
-      this.transactionForm.reset(defaultValues);
+      this.showTransactionForm = false;
+      this.isEditMode = false;
+      this.currentTransactionId = null;
+      return;
+    }
+    
+    // Ouvrir le formulaire
+    this.showTransactionForm = true;
+    
+    // Valeurs par défaut
+    const defaultValues = { 
+      type: type || 'deposit', 
+      amount: amount || 0, 
+      finalBalance: '',
+      date: new Date().toISOString().slice(0, 16), // Format YYYY-MM-DDThh:mm pour input datetime-local
+      description: description || '', 
+      source: '',
+      targetAccountId: ''
+    };
+    
+    // Si le type est profit ou loss, initialiser le solde final avec le solde actuel
+    if ((type === 'profit' || type === 'loss') && this.account) {
+      defaultValues.finalBalance = this.account.currentBalance.toString();
+    }
+    
+    // Réinitialiser le formulaire avec les valeurs spécifiées ou par défaut
+    this.transactionForm.reset(defaultValues);
+    
+    // Réinitialiser le mode d'édition
+    this.isEditMode = false;
+    this.currentTransactionId = null;
       
       // Faire défiler jusqu'à la section d'historique des transactions si demandé
       if (scroll) {
@@ -269,135 +300,229 @@ export class AccountDetailComponent implements OnInit {
         }, 100);
       }
     }
-  }
   
-  addTransaction(): void {
-    if (this.transactionForm.invalid) {
-      this.notificationService.warning('Veuillez remplir correctement tous les champs requis.');
-      return;
-    }
-    
+  /**
+   * Ajoute ou met à jour une transaction
+   */
+  /**
+   * Recharge les données du compte et des transactions
+   */
+  loadAccountDetails(): void {
     const accountId = this.route.snapshot.paramMap.get('id');
     if (!accountId) {
-      this.notificationService.error('ID de compte non trouvé.');
+      this.router.navigate(['/accounts']);
       return;
     }
     
+    // Recharger les détails du compte
+    this.account$ = this.accountService.getAccountById(accountId).pipe(
+      tap(account => {
+        if (account) {
+          this.account = account;
+        }
+      })
+    );
+    
+    // Recharger les transactions
+    this.transactions$ = this.transactionService.getTransactionsByAccount(accountId);
+    
+    // Recalculer les métriques
+    // Note: Ces méthodes doivent être implémentées dans le service AnalyticsService
+    // Pour l'instant, nous utilisons des observables vides
+    this.performance$ = of(0);
+    this.profitLoss$ = of(0);
+    this.roi$ = of(0);
+    this.withdrawalRecommendation$ = this.withdrawalStrategyService.getWithdrawalRecommendation(accountId);
+  }
+  
+  /**
+   * Ajoute ou met à jour une transaction
+   */
+  addTransaction(): void {
+    if (this.transactionForm.invalid) {
+      return;
+    }
+
+    const accountId = this.route.snapshot.paramMap.get('id');
+    if (!accountId) {
+      this.notificationService.error('Impossible d\'ajouter une transaction sans compte');
+      this.router.navigate(['/accounts']);
+      return;
+    }
+
+    const { type, amount, description, source, targetAccountId, date } = this.transactionForm.value;
+    
+    // Récupérer les informations du compte
     this.account$.pipe(
       switchMap(account => {
         if (!account) {
-          this.notificationService.error('Compte non trouvé.');
+          this.notificationService.error('Compte introuvable');
           return of(null);
         }
         
-        const { type, amount, description, source } = this.transactionForm.value;
-        
-        const transaction: Omit<Transaction, 'id'> = {
+        // Créer l'objet transaction
+        const transactionData: Omit<Transaction, 'id'> = {
           accountId,
           type,
           amount,
           currency: account.currency,
-          date: new Date(),
+          date: date ? new Date(date) : new Date(),
           description,
-          // Ajouter le champ source uniquement pour les dépôts et retraits
           ...(type !== 'transfer' ? { source } : {})
         };
         
-        // Si c'est un transfert, ajouter les informations supplémentaires
-        if (type === 'transfer') {
-          // Utiliser le compte de destination sélectionné par l'utilisateur
-          const targetId = this.transactionForm.get('targetAccountId')?.value;
-          if (targetId) {
-            transaction.targetAccountId = targetId;
-          } else {
-            this.notificationService.warning('Veuillez sélectionner un compte de destination pour le transfert.');
-            return of(null); // Ne pas procéder si aucun compte de destination n'est sélectionné
-          }
+        // Si c'est un transfert, ajouter l'ID du compte cible
+        if (type === 'transfer' && targetAccountId) {
+          (transactionData as any).targetAccountId = targetAccountId;
           
-          // Déterminer le taux de change en fonction des devises des comptes
-          // Nous savons que targetAccountId est défini ici grâce à la vérification précédente
-          this.accountService.getAccountById(transaction.targetAccountId!).subscribe(targetAccount => {
+          // Vérifier que les devises sont compatibles
+          this.accountService.getAccountById(targetAccountId).subscribe(targetAccount => {
             if (targetAccount && targetAccount.currency !== account.currency) {
-              // Taux de change entre USD et EUR
-              transaction.exchangeRate = account.currency === 'USD' ? 0.91 : 1.1;
-            } else {
-              // Même devise, pas de conversion nécessaire
-              transaction.exchangeRate = 1;
+              this.notificationService.warning(`Attention: Transfert entre comptes de devises différentes (${account.currency} → ${targetAccount.currency})`);
             }
           });
         }
         
-        return this.transactionService.addTransaction(transaction);
+        // Déterminer s'il s'agit d'une création ou d'une mise à jour
+        if (this.isEditMode && this.currentTransactionId) {
+          // Mise à jour d'une transaction existante
+          return this.transactionService.updateTransaction(this.currentTransactionId, transactionData);
+        } else {
+          // Création d'une nouvelle transaction
+          return this.transactionService.addTransaction(transactionData);
+        }
       })
     ).subscribe(
       (result) => {
         if (result) {
           const { type, amount } = this.transactionForm.value;
           
-          // Afficher une notification en fonction du type de transaction
-          switch(type) {
-            case 'deposit':
-              this.notificationService.success(`Dépôt de ${amount} ${this.transactionForm.value.currency || ''} effectué avec succès.`);
-              break;
-            case 'withdrawal':
-              this.notificationService.success(`Retrait de ${amount} ${this.transactionForm.value.currency || ''} effectué avec succès.`);
-              break;
-            case 'transfer':
-              this.notificationService.success(`Transfert de ${amount} ${this.transactionForm.value.currency || ''} effectué avec succès.`);
-              break;
-            case 'profit':
-              this.notificationService.success(`Gain de trading de ${amount} ${this.transactionForm.value.currency || ''} enregistré avec succès.`);
-              break;
-            case 'loss':
-              this.notificationService.warning(`Perte de trading de ${amount} ${this.transactionForm.value.currency || ''} enregistrée avec succès.`);
-              break;
-            default:
-              this.notificationService.success('Transaction effectuée avec succès.');
+          // Afficher une notification en fonction du type de transaction et du mode d'édition
+          if (this.isEditMode) {
+            this.notificationService.success('Transaction mise à jour avec succès.');
+          } else {
+            switch(type) {
+              case 'deposit':
+                this.notificationService.success(`Dépôt de ${amount} ${this.account?.currency || ''} effectué avec succès.`);
+                break;
+              case 'withdrawal':
+                this.notificationService.success(`Retrait de ${amount} ${this.account?.currency || ''} effectué avec succès.`);
+                break;
+              case 'transfer':
+                this.notificationService.success(`Transfert de ${amount} ${this.account?.currency || ''} effectué avec succès.`);
+                break;
+              case 'profit':
+                this.notificationService.success(`Gain de trading de ${amount} ${this.account?.currency || ''} enregistré avec succès.`);
+                break;
+              case 'loss':
+                this.notificationService.warning(`Perte de trading de ${amount} ${this.account?.currency || ''} enregistrée avec succès.`);
+                break;
+              default:
+                this.notificationService.success('Transaction effectuée avec succès.');
+            }
           }
           
+          // Fermer le formulaire
           this.toggleTransactionForm();
           
-          // Update account balance based on transaction
-          this.account$.pipe(
-            switchMap(account => {
-              if (!account) return of(null);
-              
-              let newBalance = account.currentBalance;
-              
-              if (type === 'deposit') {
-                newBalance += amount;
-              } else if (type === 'withdrawal') {
-                newBalance -= amount;
-              } else if (type === 'transfer') {
-                newBalance -= amount;
-              } else if (type === 'profit') {
-                newBalance += amount;
-              } else if (type === 'loss') {
-                newBalance -= amount;
-              }
-              
-              return this.accountService.updateAccount(accountId!, { 
-                currentBalance: newBalance,
-                ...(type === 'deposit' ? { totalDeposits: account.totalDeposits + amount } : {}),
-                ...(type === 'withdrawal' ? { totalWithdrawals: account.totalWithdrawals + amount } : {}),
-                ...(type === 'profit' ? { totalProfits: (account.totalProfits || 0) + amount } : {}),
-                ...(type === 'loss' ? { totalLosses: (account.totalLosses || 0) + amount } : {})
-              });
-            })
-          ).subscribe(
-            () => {},
-            error => {
-              this.notificationService.error('Erreur lors de la mise à jour du solde du compte.');
-              console.error('Erreur de mise à jour du solde:', error);
-            }
-          );
+          // Recharger les données du compte
+          this.loadAccountDetails();
         }
       },
       error => {
-        this.notificationService.error('Erreur lors de l\'ajout de la transaction.');
-        console.error('Erreur d\'ajout de transaction:', error);
+        // Afficher un message d'erreur différent selon le mode (ajout ou édition)
+        if (this.isEditMode) {
+          this.notificationService.error('Erreur lors de la mise à jour de la transaction.');
+        } else {
+          this.notificationService.error('Erreur lors de l\'ajout de la transaction.');
+        }
+        console.error('Erreur de transaction:', error);
+        
+        // Recharger les données du compte pour s'assurer que l'interface est à jour
+        this.loadAccountDetails();
       }
     );
+  }
+  
+  /**
+   * Calcule le montant de la transaction à partir du solde final souhaité
+   */
+  calculateAmountFromFinalBalance(): void {
+    if (!this.account) return;
+    
+    const finalBalance = this.transactionForm.get('finalBalance')?.value;
+    if (finalBalance === null || finalBalance === undefined || finalBalance === '') return;
+    
+    const currentBalance = this.account.currentBalance;
+    const type = this.transactionForm.get('type')?.value;
+    
+    // Calculer le montant en fonction du type de transaction
+    if (type === 'profit') {
+      // Pour un gain, le montant est la différence positive entre le solde final et le solde actuel
+      const amount = Math.max(0, finalBalance - currentBalance);
+      this.transactionForm.get('amount')?.setValue(amount.toFixed(2));
+    } else if (type === 'loss') {
+      // Pour une perte, le montant est la différence positive entre le solde actuel et le solde final
+      const amount = Math.max(0, currentBalance - finalBalance);
+      this.transactionForm.get('amount')?.setValue(amount.toFixed(2));
+    }
+  }
+  
+  /**
+   * Calcule le solde final à partir du montant de la transaction
+   */
+  calculateFinalBalanceFromAmount(): void {
+    if (!this.account) return;
+    
+    const amount = this.transactionForm.get('amount')?.value;
+    if (amount === null || amount === undefined || amount === '') return;
+    
+    const currentBalance = this.account.currentBalance;
+    const type = this.transactionForm.get('type')?.value;
+    
+    // Calculer le solde final en fonction du type de transaction
+    if (type === 'profit') {
+      // Pour un gain, le solde final est le solde actuel + le montant
+      const finalBalance = currentBalance + parseFloat(amount);
+      this.transactionForm.get('finalBalance')?.setValue(finalBalance.toFixed(2));
+    } else if (type === 'loss') {
+      // Pour une perte, le solde final est le solde actuel - le montant
+      const finalBalance = currentBalance - parseFloat(amount);
+      this.transactionForm.get('finalBalance')?.setValue(finalBalance.toFixed(2));
+    }
+  }
+  
+  /**
+   * Prépare le formulaire pour éditer une transaction existante
+   * @param transaction La transaction à éditer
+   */
+  editTransaction(transaction: Transaction): void {
+    // Ouvrir le formulaire en mode édition
+    this.isEditMode = true;
+    this.currentTransactionId = transaction.id;
+    this.showTransactionForm = true;
+    
+    // Formater la date pour le champ datetime-local
+    const transactionDate = new Date(transaction.date);
+    const formattedDate = transactionDate.toISOString().slice(0, 16); // Format YYYY-MM-DDThh:mm
+    
+    // Remplir le formulaire avec les données de la transaction
+    this.transactionForm.patchValue({
+      type: transaction.type,
+      amount: transaction.amount,
+      date: formattedDate,
+      description: transaction.description || '',
+      source: transaction.source || '',
+      targetAccountId: transaction.targetAccountId || ''
+    });
+    
+    // Faire défiler jusqu'au formulaire
+    setTimeout(() => {
+      const formElement = document.getElementById('transaction-form');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   }
   
   /**

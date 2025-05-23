@@ -214,6 +214,21 @@
           </select>
         </div>
         
+        <!-- Champ pour le solde final (uniquement pour profit et loss) -->
+        <div class="form-group" *ngIf="transactionForm.get('type')?.value === 'profit' || transactionForm.get('type')?.value === 'loss'">
+          <label for="finalBalance">Solde final souhaité ({{ account.currency }}):</label>
+          <input 
+            type="number" 
+            id="finalBalance" 
+            formControlName="finalBalance"
+            class="form-control"
+            (input)="calculateAmountFromFinalBalance()"
+          >
+          <small class="form-text text-muted">
+            Saisissez le solde final de votre compte après le gain ou la perte. Le montant sera calculé automatiquement.
+          </small>
+        </div>
+        
         <div class="form-group">
           <label for="amount">Montant ({{ account.currency }}):</label>
           <input 
@@ -222,10 +237,21 @@
             formControlName="amount"
             class="form-control"
             [ngClass]="{'invalid': transactionForm.get('amount')?.invalid && transactionForm.get('amount')?.touched}"
+            (input)="calculateFinalBalanceFromAmount()"
           >
           <div class="error-message" *ngIf="transactionForm.get('amount')?.invalid && transactionForm.get('amount')?.touched">
             Le montant doit être supérieur à 0.
           </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="date">Date de la transaction:</label>
+          <input 
+            type="datetime-local" 
+            id="date" 
+            formControlName="date"
+            class="form-control"
+          >
         </div>
         
         <div class="form-group">
@@ -255,7 +281,9 @@
         
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" (click)="toggleTransactionForm()"><i class="fas fa-times mr-2"></i>Annuler</button>
-          <button type="submit" class="btn btn-primary" [disabled]="transactionForm.invalid"><i class="fas fa-save mr-2"></i>Enregistrer</button>
+          <button type="submit" class="btn btn-primary" [disabled]="transactionForm.invalid">
+            <i class="fas fa-save mr-2"></i>{{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }}
+          </button>
         </div>
       </form>
     </div>
@@ -319,6 +347,11 @@
           <!-- Affichage de l'origine des fonds pour les dépôts et retraits -->
           <div class="transaction-source" *ngIf="transaction.source && transaction.type !== 'transfer'">
             <strong>Origine:</strong> {{ transaction.source }}
+          </div>
+          
+          <!-- Boutons d'action pour la transaction -->
+          <div class="transaction-actions">
+            <button class="btn btn-sm btn-primary" (click)="editTransaction(transaction)"><i class="fas fa-edit mr-1"></i>Modifier</button>
           </div>
         </div>
       </div>

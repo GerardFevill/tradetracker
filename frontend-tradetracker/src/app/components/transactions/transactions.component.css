@@ -124,6 +124,10 @@
   color: var(--danger-color);
 }
 
+.neutral {
+  color: var(--primary-color);
+}
+
 .transactions-list {
   display: flex;
   flex-direction: column;
@@ -164,6 +168,11 @@
 .withdrawal-icon {
   background-color: rgba(var(--danger-color-rgb), 0.1);
   color: var(--danger-color);
+}
+
+.transfer-icon {
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  color: var(--primary-color);
 }
 
 .transaction-details {
@@ -228,6 +237,18 @@
   display: flex;
   align-items: center;
   margin-left: 15px;
+  gap: 10px;
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+  border-color: var(--danger-color);
+}
+
+.btn-danger:hover {
+  background-color: rgba(var(--danger-color-rgb), 0.8);
+  border-color: rgba(var(--danger-color-rgb), 0.8);
 }
 
 .no-transactions {
@@ -245,11 +266,13 @@
 :root {
   --success-color-rgb: 45, 164, 78;
   --danger-color-rgb: 207, 34, 46;
+  --primary-color-rgb: 0, 120, 212;
 }
 
 .dark-mode {
   --success-color-rgb: 63, 185, 80;
   --danger-color-rgb: 248, 81, 73;
+  --primary-color-rgb: 58, 150, 221;
 }
 
 @media (max-width: 768px) {

@@ -17,6 +17,15 @@ export class AccountsComponent implements OnInit {
   filteredAccounts$!: Observable<Account[]>;
   selectedCurrency: Currency | 'all' = 'all';
   selectedBroker: string | 'all' = 'all';
+  searchTerm: string = '';
+  
+  // Pour le résumé des comptes
+  totalNetResult: number = 0;
+  activeAccountsCount: number = 0;
+  inactiveAccountsCount: number = 0;
+  totalAccountsCount: number = 0;
+  activeAccountsNetResult: number = 0;
+  inactiveAccountsNetResult: number = 0;
   
   // Pour la gestion du menu déroulant
   activeDropdown: string | null = null;
@@ -36,6 +45,10 @@ export class AccountsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Recharger les comptes depuis l'API à chaque visite de la page
+    this.accountService.refreshAccounts();
+    
+    // Récupérer les comptes mis à jour
     this.accounts$ = this.accountService.getAccounts();
     this.filteredAccounts$ = this.accounts$;
     
@@ -54,6 +67,16 @@ export class AccountsComponent implements OnInit {
     this.selectedBroker = broker;
     this.applyFilters();
   }
+  
+  /**
+   * Filtre les comptes par nom en fonction du terme de recherche
+   * @param event Événement de saisie dans le champ de recherche
+   */
+  filterByName(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchTerm = input.value.trim().toLowerCase();
+    this.applyFilters();
+  }
 
   private applyFilters(): void {
     let filtered$ = this.accounts$;
@@ -65,15 +88,44 @@ export class AccountsComponent implements OnInit {
     if (this.selectedBroker !== 'all' && this.selectedCurrency !== 'all') {
       // We need to filter the already currency-filtered accounts by broker
       this.filteredAccounts$ = filtered$.pipe(
-        map((accounts: Account[]) => accounts.filter((account: Account) => account.broker === this.selectedBroker))
+        map((accounts: Account[]) => accounts
+          .filter((account: Account) => account.broker === this.selectedBroker)
+          // Appliquer le filtre de recherche par nom si nécessaire
+          .filter(account => this.filterAccountBySearchTerm(account))
+          // Tri alphabétique par nom de compte
+          .sort((a, b) => a.name.localeCompare(b.name))
+        )
       );
     } else if (this.selectedBroker !== 'all') {
       // Just filter by broker
-      this.filteredAccounts$ = this.accountService.getAccountsByBroker(this.selectedBroker);
+      this.filteredAccounts$ = this.accountService.getAccountsByBroker(this.selectedBroker).pipe(
+        map(accounts => accounts
+          .filter(account => this.filterAccountBySearchTerm(account))
+          .sort((a, b) => a.name.localeCompare(b.name))
+        )
+      );
     } else {
       // No broker filter, just use the currency filter (or all accounts if no currency filter)
-      this.filteredAccounts$ = filtered$;
+      this.filteredAccounts$ = filtered$.pipe(
+        map(accounts => accounts
+          .filter(account => this.filterAccountBySearchTerm(account))
+          .sort((a, b) => a.name.localeCompare(b.name))
+        )
+      );
     }
+  }
+  
+  /**
+   * Filtre un compte en fonction du terme de recherche
+   * @param account Le compte à filtrer
+   * @returns true si le compte correspond au terme de recherche, false sinon
+   */
+  private filterAccountBySearchTerm(account: Account): boolean {
+    if (!this.searchTerm) return true;
+    
+    const searchTerm = this.searchTerm.toLowerCase();
+    return account.name.toLowerCase().includes(searchTerm) || 
+           account.broker.toLowerCase().includes(searchTerm);
   }
 
   /**
@@ -213,6 +265,34 @@ export class AccountsComponent implements OnInit {
       } 
     });
     this.notificationService.info('Préparation du formulaire d’enregistrement de perte...');
+  }
+  
+  /**
+   * Bascule le statut actif/inactif d'un compte
+   * @param account Le compte dont le statut doit être modifié
+   */
+  toggleAccountStatus(account: Account): void {
+    // Inverser le statut actif/inactif
+    const isActive = !account.isActive;
+    
+    // Mettre à jour le compte dans le service
+    this.accountService.updateAccount(account.id, { isActive }).subscribe({
+      next: (result) => {
+        // Afficher une notification de succès
+        this.notificationService.success(
+          `Le compte ${account.name} est maintenant ${result.isActive ? 'actif' : 'inactif'}.`
+        );
+        
+        // Rafraîchir la liste des comptes
+        this.accountService.refreshAccounts();
+      },
+      error: (error) => {
+        // Afficher une notification d'erreur
+        this.notificationService.error(
+          `Erreur lors de la mise à jour du statut du compte: ${error.message}`
+        );
+      }
+    });
   }
   
   /**

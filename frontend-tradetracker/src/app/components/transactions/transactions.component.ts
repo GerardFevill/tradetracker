@@ -4,6 +4,7 @@ import { TransactionService } from '../../services/transaction.service';
 import { AccountService } from '../../services/account.service';
 import { Transaction } from '../../models/transaction.model';
 import { Account, Currency } from '../../models/account.model';
+import { NotificationService } from '../../services/notification.service';
 
 interface TransactionWithAccountName extends Transaction {
   accountName: string;
@@ -18,7 +19,7 @@ export class TransactionsComponent implements OnInit {
   transactions$!: Observable<TransactionWithAccountName[]>;
   filteredTransactions$!: Observable<TransactionWithAccountName[]>;
   
-  selectedType: 'all' | 'deposit' | 'withdrawal' = 'all';
+  selectedType: 'all' | 'deposit' | 'withdrawal' | 'transfer' = 'all';
   selectedCurrency: Currency | 'all' = 'all';
   selectedAccountId: string | 'all' = 'all';
   
@@ -26,7 +27,8 @@ export class TransactionsComponent implements OnInit {
   
   constructor(
     private transactionService: TransactionService,
-    private accountService: AccountService
+    private accountService: AccountService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -55,7 +57,7 @@ export class TransactionsComponent implements OnInit {
     this.filteredTransactions$ = this.transactions$;
   }
   
-  filterByType(type: 'all' | 'deposit' | 'withdrawal'): void {
+  filterByType(type: 'all' | 'deposit' | 'withdrawal' | 'transfer'): void {
     this.selectedType = type;
     this.applyFilters();
   }
@@ -111,5 +113,20 @@ export class TransactionsComponent implements OnInit {
       
       return totals;
     }, {} as { [key in Currency]: number });
+  }
+  
+  deleteTransaction(transaction: TransactionWithAccountName): void {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer cette transaction ${transaction.type === 'deposit' ? 'de dépôt' : 'de retrait'} de ${transaction.amount} ${transaction.currency} sur le compte ${transaction.accountName}?`)) {
+      this.transactionService.deleteTransaction(transaction.id).subscribe({
+        next: () => {
+          this.notificationService.success('Transaction supprimée avec succès');
+          // Pas besoin de recharger les transactions manuellement car le service s'en charge
+        },
+        error: (error) => {
+          console.error('Erreur lors de la suppression de la transaction:', error);
+          this.notificationService.error('Erreur lors de la suppression de la transaction');
+        }
+      });
+    }
   }
 }

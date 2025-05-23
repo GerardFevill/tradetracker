@@ -1,8 +1,11 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, combineLatest, map, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Account, Currency } from '../models/account.model';
 import { AccountService } from './account.service';
 import { TransactionService } from './transaction.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -13,46 +16,14 @@ export class AnalyticsService {
   
   // Observable to track exchange rate changes
   private exchangeRateSubject = new BehaviorSubject<{ EUR_TO_USD: number, USD_TO_EUR: number }>(this.exchangeRate);
-  
-  // Données mockées pour les performances des comptes
-  private mockPerformanceData: { [accountId: string]: number } = {
-    '1': 83.0, // 12450.75 / 15000 * 100
-    '2': 87.5, // 8750.50 / 10000 * 100
-    '3': 64.0, // 3200.25 / 5000 * 100
-    '4': 85.8, // 5150.80 / 6000 * 100
-    '5': 78.2  // 7820.45 / 10000 * 100
-  };
-  
-  // Données mockées pour les suggestions de retrait
-  private mockWithdrawalSuggestions: { [accountId: string]: number } = {
-    '1': 0,     // Sous le seuil
-    '2': 0,     // Sous le seuil
-    '3': 0,     // Sous le seuil
-    '4': 0,     // Sous le seuil
-    '5': 0      // Sous le seuil
-  };
-  
-  // Données mockées pour les profits/pertes
-  private mockProfitLossData: { [accountId: string]: number } = {
-    '1': 4450.75,  // 12450.75 + 2000 - 10000
-    '2': 2250.50,  // 8750.50 + 1000 - 7500
-    '3': 200.25,   // 3200.25 + 0 - 3000
-    '4': 650.80,   // 5150.80 + 500 - 5000
-    '5': 1820.45   // 7820.45 + 0 - 6000
-  };
-  
-  // Données mockées pour le ROI
-  private mockROIData: { [accountId: string]: number } = {
-    '1': 44.51,  // (12450.75 + 2000 - 10000) / 10000 * 100
-    '2': 30.01,  // (8750.50 + 1000 - 7500) / 7500 * 100
-    '3': 6.68,   // (3200.25 + 0 - 3000) / 3000 * 100
-    '4': 13.02,  // (5150.80 + 500 - 5000) / 5000 * 100
-    '5': 30.34   // (7820.45 + 0 - 6000) / 6000 * 100
-  };
+
+  // URL de l'API depuis le fichier d'environnement
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private accountService: AccountService,
-    private transactionService: TransactionService
+    private transactionService: TransactionService,
+    private http: HttpClient
   ) {}
 
   setExchangeRates(eurToUsd: number, usdToEur: number): void {
@@ -69,25 +40,22 @@ export class AnalyticsService {
     return this.accountService.getAccountById(accountId).pipe(
       map(account => {
         if (!account) return 0;
-        return account.targetBalance > 0 
+        const result = account.targetBalance > 0 
           ? (account.currentBalance / account.targetBalance) * 100 
           : 0;
+        return Number(result.toFixed(2));
       })
     );
   }
 
   getWithdrawalSuggestions(accountId: string): Observable<number> {
-    // Utiliser les données mockées pour une réponse plus rapide
-    if (this.mockWithdrawalSuggestions[accountId] !== undefined) {
-      return of(this.mockWithdrawalSuggestions[accountId]);
-    }
-    
-    // Sinon, calculer normalement
+    // Calculer la suggestion de retrait en fonction du seuil de retrait
     return this.accountService.getAccountById(accountId).pipe(
       map(account => {
         if (!account || account.currentBalance <= account.withdrawalThreshold) return 0;
         // Suggest withdrawing anything above the threshold
-        return account.currentBalance - account.withdrawalThreshold;
+        const result = account.currentBalance - account.withdrawalThreshold;
+        return Number(result.toFixed(2));
       })
     );
   }
@@ -103,7 +71,7 @@ export class AnalyticsService {
   getTotalBalanceInCurrency(targetCurrency: Currency): Observable<number> {
     return this.accountService.getAccounts().pipe(
       map(accounts => {
-        return accounts.reduce((total, account) => {
+        const result = accounts.reduce((total, account) => {
           let balance = account.currentBalance;
           
           // Convert if currencies don't match
@@ -117,6 +85,7 @@ export class AnalyticsService {
           
           return total + balance;
         }, 0);
+        return Number(result.toFixed(2));
       })
     );
   }
@@ -136,12 +105,7 @@ export class AnalyticsService {
   }
 
   getAccountProfitLoss(accountId: string): Observable<number> {
-    // Utiliser les données mockées pour une réponse plus rapide
-    if (this.mockProfitLossData[accountId] !== undefined) {
-      return of(this.mockProfitLossData[accountId]);
-    }
-    
-    // Sinon, calculer normalement
+    // Calculer les profits/pertes en utilisant les données du backend
     return combineLatest([
       this.accountService.getAccountById(accountId),
       this.transactionService.getTotalDepositsByAccount(accountId),
@@ -156,12 +120,6 @@ export class AnalyticsService {
   }
 
   getAccountROI(accountId: string): Observable<number> {
-    // Utiliser les données mockées pour une réponse plus rapide
-    if (this.mockROIData[accountId] !== undefined) {
-      return of(this.mockROIData[accountId]);
-    }
-    
-    // Sinon, calculer normalement
     return combineLatest([
       this.accountService.getAccountById(accountId),
       this.transactionService.getTotalDepositsByAccount(accountId),
@@ -172,6 +130,382 @@ export class AnalyticsService {
         // ROI = (Current Balance + Total Withdrawals - Total Deposits) / Total Deposits * 100
         const profitLoss = account.currentBalance + totalWithdrawals - totalDeposits;
         return (profitLoss / totalDeposits) * 100;
+      })
+    );
+  }
+  
+  /**
+   * Calcule le total des profits pour une devise spécifique
+   * @param currency La devise cible (USD ou EUR)
+   * @returns Le montant total des profits dans la devise spécifiée
+   */
+  getTotalProfitsInCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        console.log(`Calcul des profits totaux en ${currency}:`, accounts);
+        const result = accounts.reduce((total, account) => {
+          let profits = account.totalProfits || 0;
+          console.log(`Compte ${account.name} (${account.currency}): profits = ${profits}`);
+          
+          // Convertir si les devises ne correspondent pas
+          if (account.currency !== currency) {
+            profits = this.convertCurrency(profits, account.currency, currency);
+            console.log(`Après conversion: profits = ${profits}`);
+          }
+          
+          return total + profits;
+        }, 0);
+        
+        console.log(`Total des profits en ${currency}: ${result}`);
+        return result;
+      })
+    );
+  }
+  
+  /**
+   * Calcule le total des pertes pour une devise spécifique
+   * @param currency La devise cible (USD ou EUR)
+   * @returns Le montant total des pertes dans la devise spécifiée
+   */
+  getTotalLossesInCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        console.log(`Calcul des pertes totales en ${currency}:`, accounts);
+        const result = accounts.reduce((total, account) => {
+          let losses = account.totalLosses || 0;
+          console.log(`Compte ${account.name} (${account.currency}): pertes = ${losses}`);
+          
+          // Convertir si les devises ne correspondent pas
+          if (account.currency !== currency) {
+            losses = this.convertCurrency(losses, account.currency, currency);
+            console.log(`Après conversion: pertes = ${losses}`);
+          }
+          
+          return total + losses;
+        }, 0);
+        
+        console.log(`Total des pertes en ${currency}: ${result}`);
+        return result;
+      })
+    );
+  }
+  
+  /**
+   * Récupère les données de performance récente depuis le backend
+   * @returns Un tableau d'objets contenant la période, le changement et la devise
+   */
+  getRecentPerformance(): Observable<{period: string, change: number, currency: string}[]> {
+    // Récupérer les données de performance depuis le backend
+    return this.http.get<{period: string, change: number, currency: string}[]>(`${this.apiUrl}/analytics/performance`)
+      .pipe(
+        catchError(error => {
+          console.error('Erreur lors de la récupération des performances récentes', error);
+          // En cas d'erreur, retourner des données par défaut pour éviter de bloquer l'interface
+          return of([
+            { period: 'Cette semaine', change: 0, currency: 'USD' },
+            { period: 'Ce mois', change: 0, currency: 'USD' },
+            { period: 'Ce trimestre', change: 0, currency: 'USD' },
+            { period: 'Cette année', change: 0, currency: 'USD' },
+            { period: 'Cette semaine', change: 0, currency: 'EUR' },
+            { period: 'Ce mois', change: 0, currency: 'EUR' },
+            { period: 'Ce trimestre', change: 0, currency: 'EUR' },
+            { period: 'Cette année', change: 0, currency: 'EUR' }
+          ]);
+        })
+      );
+  }
+  
+  // Méthodes pour le résumé des comptes actifs/inactifs
+  getActiveAccountsCount(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => accounts.filter(account => account.isActive === undefined ? true : account.isActive).length)
+    );
+  }
+  
+  getInactiveAccountsCount(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => accounts.filter(account => account.isActive === false).length)
+    );
+  }
+  
+  getTotalAccountsCount(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => accounts.length)
+    );
+  }
+  
+  getActiveAccountsNetResult(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => accounts
+        .filter(account => account.isActive === undefined ? true : account.isActive)
+        .reduce((total, account) => total + (account.totalProfits - account.totalLosses), 0)
+      )
+    );
+  }
+  
+  getInactiveAccountsNetResult(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => accounts
+        .filter(account => account.isActive === false)
+        .reduce((total, account) => total + (account.totalProfits - account.totalLosses), 0)
+      )
+    );
+  }
+  
+  getTotalNetResult(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .reduce((total, account) => total + (account.totalProfits - account.totalLosses), 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  // Méthodes pour le solde courant par statut de compte
+  getActiveAccountsCurrentBalance(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.isActive === undefined ? true : account.isActive)
+          .reduce((total, account) => total + account.currentBalance, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getInactiveAccountsCurrentBalance(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.isActive === false)
+          .reduce((total, account) => total + account.currentBalance, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getTotalCurrentBalance(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .reduce((total, account) => total + account.currentBalance, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  // Méthodes pour les dépôts totaux par statut de compte
+  getActiveAccountsTotalDeposits(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.isActive === undefined ? true : account.isActive)
+          .reduce((total, account) => total + account.totalDeposits, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getInactiveAccountsTotalDeposits(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.isActive === false)
+          .reduce((total, account) => total + account.totalDeposits, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getTotalDeposits(): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .reduce((total, account) => total + account.totalDeposits, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  // Méthodes pour les soldes par devise et statut de compte
+  getActiveAccountsBalanceByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => (account.isActive === undefined ? true : account.isActive) && account.currency === currency)
+          .reduce((total, account) => total + account.currentBalance, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getInactiveAccountsBalanceByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.isActive === false && account.currency === currency)
+          .reduce((total, account) => total + account.currentBalance, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getTotalBalanceByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.currency === currency)
+          .reduce((total, account) => total + account.currentBalance, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  // Méthodes pour les dépôts totaux par devise
+  getActiveAccountsTotalDepositsByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => (account.isActive === undefined ? true : account.isActive) && account.currency === currency)
+          .reduce((total, account) => total + account.totalDeposits, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getInactiveAccountsTotalDepositsByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.isActive === false && account.currency === currency)
+          .reduce((total, account) => total + account.totalDeposits, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getTotalDepositsByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.currency === currency)
+          .reduce((total, account) => total + account.totalDeposits, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  // Méthodes pour les résultats nets par devise
+  getActiveAccountsNetResultByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => (account.isActive === undefined ? true : account.isActive) && account.currency === currency)
+          .reduce((total, account) => total + (account.totalProfits - account.totalLosses), 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getInactiveAccountsNetResultByCurrency(currency: Currency): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.isActive === false && account.currency === currency)
+          .reduce((total, account) => total + (account.totalProfits - account.totalLosses), 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  getTotalNetResultByCurrency(currency: string): Observable<number> {
+    return this.accountService.getAccounts().pipe(
+      map(accounts => {
+        const result = accounts
+          .filter(account => account.currency === currency)
+          .reduce((total, account) => {
+            const netResult = (account.totalProfits || 0) - (account.totalLosses || 0);
+            return total + netResult;
+          }, 0);
+        return Number(result.toFixed(2));
+      })
+    );
+  }
+  
+  // Méthode pour obtenir l'historique des soldes depuis le backend avec une période spécifiée
+  getBalanceHistoryByPeriod(period: string = '1y'): Observable<{month: string, usd: number, eur: number}[]> {
+    // Convertir le format de période du frontend au format attendu par le backend
+    let backendPeriod: string;
+    switch (period) {
+      case '1w': backendPeriod = 'week'; break;
+      case '1m': backendPeriod = 'month'; break;
+      case '3m': backendPeriod = 'threeMonths'; break;
+      case '6m': backendPeriod = 'sixMonths'; break;
+      case '1y': backendPeriod = 'year'; break;
+      default: backendPeriod = 'year';
+    }
+    
+    return this.http.get<any>(`${this.apiUrl}/analytics/balance-history?period=${backendPeriod}`).pipe(
+      map(response => {
+        // Transformer la réponse au format attendu par le composant
+        const result: {month: string, usd: number, eur: number}[] = [];
+        
+        if (response && response.labels && response.datasets) {
+          const usdData = response.datasets.find((d: any) => d.label === 'USD')?.data || [];
+          const eurData = response.datasets.find((d: any) => d.label === 'EUR')?.data || [];
+          
+          response.labels.forEach((month: string, index: number) => {
+            result.push({
+              month: month,
+              usd: usdData[index] || 0,
+              eur: eurData[index] || 0
+            });
+          });
+        }
+        
+        return result;
+      }),
+      catchError(error => {
+        console.error('Erreur lors de la récupération de l\'historique des soldes:', error);
+        // En cas d'erreur, retourner des données statiques comme fallback
+        return of([]);
+      })
+    );
+  }
+  
+  // Méthode pour obtenir l'historique des soldes depuis le backend (pour compatibilité)
+  getBalanceHistory(): Observable<{month: string, usd: number, eur: number}[]> {
+    return this.getBalanceHistoryByPeriod('1y');
+  }
+  
+  // Méthode pour obtenir l'historique des résultats nets depuis le backend
+  getNetResultHistory(): Observable<{month: string, usd: number, eur: number}[]> {
+    // Utiliser le nouvel endpoint simplifié qui contient les données correctes
+    return this.http.get<any>(`${this.apiUrl}/analytics/simple-net-results`).pipe(
+      map(response => {
+        // Transformer la réponse au format attendu par le composant
+        const result: {month: string, usd: number, eur: number}[] = [];
+        
+        if (response && response.labels && response.datasets) {
+          const usdData = response.datasets.find((d: any) => d.label === 'USD')?.data || [];
+          const eurData = response.datasets.find((d: any) => d.label === 'EUR')?.data || [];
+          
+          response.labels.forEach((month: string, index: number) => {
+            result.push({
+              month: month,
+              usd: usdData[index] || 0,
+              eur: eurData[index] || 0
+            });
+          });
+        }
+        
+        return result;
+      }),
+      catchError(error => {
+        console.error('Erreur lors de la récupération de l\'historique des résultats nets:', error);
+        // En cas d'erreur, retourner des données statiques comme fallback
+        return of([]);
       })
     );
   }

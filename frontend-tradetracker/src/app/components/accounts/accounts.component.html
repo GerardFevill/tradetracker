@@ -26,6 +26,26 @@
         <button class="btn" [class.active]="selectedBroker === 'Other'" (click)="filterByBroker('Other')">Autres</button>
       </div>
     </div>
+    
+    <div class="filter-group search-group">
+      <label>Recherche:</label>
+      <div class="search-input-container">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Filtrer par nom ou broker..." 
+          (input)="filterByName($event)" 
+          [value]="searchTerm"
+        >
+        <i class="fas fa-search search-icon"></i>
+        <button 
+          *ngIf="searchTerm" 
+          class="clear-search" 
+          (click)="searchTerm = ''; filterByName($event)">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
   </div>
   
   <div class="accounts-list" *ngIf="(filteredAccounts$ | async) as accounts">
@@ -41,8 +61,17 @@
             {{ account.currency }}
           </span>
         </div>
-        <div class="last-update-info">
-          <span class="update-date">MàJ: {{ account.updatedAt | date:'dd/MM/yyyy' }}</span>
+        <div class="header-actions">
+          <div class="status-toggle">
+            <label class="switch">
+              <input type="checkbox" [checked]="account.isActive" (change)="toggleAccountStatus(account)">
+              <span class="slider round"></span>
+            </label>
+            <span class="status-label">{{ account.isActive ? 'Actif' : 'Inactif' }}</span>
+          </div>
+          <div class="last-update-info">
+            <span class="update-date">MàJ: {{ account.updatedAt | date:'dd/MM/yyyy' }}</span>
+          </div>
         </div>
       </div>
       
@@ -57,13 +86,9 @@
         </div>
         <div class="account-stats">
           <div class="stats-row">
-            <div class="stat-item profit-stat">
-              <div class="stat-value">{{ account.totalProfits || 0 | currency:account.currency:'symbol':'1.0-0' }}</div>
-              <div class="stat-label">Gains</div>
-            </div>
-            <div class="stat-item loss-stat">
-              <div class="stat-value">{{ account.totalLosses || 0 | currency:account.currency:'symbol':'1.0-0' }}</div>
-              <div class="stat-label">Pertes</div>
+            <div class="stat-item" [ngClass]="{'profit-stat': (account.totalProfits || 0) - (account.totalLosses || 0) >= 0, 'loss-stat': (account.totalProfits || 0) - (account.totalLosses || 0) < 0}">
+              <div class="stat-value">{{ ((account.totalProfits || 0) - (account.totalLosses || 0)) | currency:account.currency:'symbol':'1.0-0' }}</div>
+              <div class="stat-label">Résultat Net</div>
             </div>
           </div>
           <div class="stats-row">

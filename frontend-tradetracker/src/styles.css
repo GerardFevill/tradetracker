@@ -4,12 +4,17 @@
 :root {
   /* Light theme (default) - GitHub inspired */
   --primary-color: #0366d6;
+  --primary-color-rgb: 3, 102, 214;
   --primary-light: #f1f8ff;
   --secondary-color: #586069;
   --success-color: #2cbe4e;
+  --success-color-rgb: 44, 190, 78;
   --danger-color: #cb2431;
+  --danger-color-rgb: 203, 36, 49;
   --warning-color: #f66a0a;
+  --warning-color-rgb: 246, 106, 10;
   --info-color: #0366d6;
+  --info-color-rgb: 3, 102, 214;
   --light-color: #f6f8fa;
   --dark-color: #24292e;
   --body-bg: #ffffff;
@@ -17,6 +22,7 @@
   --text-color: #24292e;
   --text-secondary: #586069;
   --border-color: #e1e4e8;
+  --border-color-rgb: 225, 228, 232;
   --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   --button-hover-bg: #f3f4f6;
   --header-bg: #24292e;
@@ -28,12 +34,17 @@
 /* Dark theme - GitHub Dark inspired */
 .dark-mode {
   --primary-color: #58a6ff;
+  --primary-color-rgb: 88, 166, 255;
   --primary-light: #0d419d;
   --secondary-color: #8b949e;
   --success-color: #3fb950;
+  --success-color-rgb: 63, 185, 80;
   --danger-color: #f85149;
+  --danger-color-rgb: 248, 81, 73;
   --warning-color: #d29922;
+  --warning-color-rgb: 210, 153, 34;
   --info-color: #58a6ff;
+  --info-color-rgb: 88, 166, 255;
   --light-color: #161b22;
   --dark-color: #c9d1d9;
   --body-bg: #0d1117;
@@ -41,6 +52,7 @@
   --text-color: #c9d1d9;
   --text-secondary: #8b949e;
   --border-color: #30363d;
+  --border-color-rgb: 48, 54, 61;
   --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   --button-hover-bg: #21262d;
   --header-bg: #161b22;

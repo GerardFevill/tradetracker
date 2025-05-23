@@ -1,0 +1,89 @@
+<div class="card status-card" [ngClass]="cardClass">
+  <div class="card-header">{{ title }}</div>
+  <div class="card-body">
+    <div class="status-count" *ngIf="accountsCount$ | async as count">{{ count }}</div>
+    <div class="status-details">     
+      <ng-container *ngIf="(depositsUSD$ | async) as depositsUSD; else zeroDepositsUSD">
+        <div class="status-item">
+          <span class="item-label">Dépôts USD:</span>
+          <span class="item-value">{{ +depositsUSD | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-container>
+      <ng-template #zeroDepositsUSD>
+        <div class="status-item">
+          <span class="item-label">Dépôts USD:</span>
+          <span class="item-value">{{ 0 | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-template>
+      
+      <ng-container *ngIf="(depositsEUR$ | async) as depositsEUR; else zeroDepositsEUR">
+        <div class="status-item">
+          <span class="item-label">Dépôts EUR:</span>
+          <span class="item-value">{{ +depositsEUR | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-container>
+      <ng-template #zeroDepositsEUR>
+        <div class="status-item">
+          <span class="item-label">Dépôts EUR:</span>
+          <span class="item-value">{{ 0 | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-template>
+      
+      <ng-container *ngIf="(balanceUSD$ | async) as balanceUSD; else zeroBalanceUSD">
+        <div class="status-item">
+          <span class="item-label">Solde USD:</span>
+          <span class="item-value">{{ +balanceUSD | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-container>
+      <ng-template #zeroBalanceUSD>
+        <div class="status-item">
+          <span class="item-label">Solde USD:</span>
+          <span class="item-value">{{ 0 | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-template>
+      
+      <ng-container *ngIf="(balanceEUR$ | async) as balanceEUR; else zeroBalanceEUR">
+        <div class="status-item">
+          <span class="item-label">Solde EUR:</span>
+          <span class="item-value">{{ +balanceEUR | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-container>
+      <ng-template #zeroBalanceEUR>
+        <div class="status-item">
+          <span class="item-label">Solde EUR:</span>
+          <span class="item-value">{{ 0 | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-template>
+      
+      <ng-container *ngIf="(netResultUSD$ | async) as netResultUSD; else zeroNetResultUSD">
+        <div class="status-item result-item">
+          <span class="item-label">Bénéfice USD:</span>
+          <span [ngClass]="{'profit-value': +netResultUSD > 0, 'loss-value': +netResultUSD < 0}">
+            {{ +netResultUSD | currency:'USD':'symbol':'1.0-0' }}
+          </span>
+        </div>
+      </ng-container>
+      <ng-template #zeroNetResultUSD>
+        <div class="status-item result-item">
+          <span class="item-label">Bénéfice USD:</span>
+          <span>{{ 0 | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-template>
+      
+      <ng-container *ngIf="(netResultEUR$ | async) as netResultEUR; else zeroNetResultEUR">
+        <div class="status-item result-item">
+          <span class="item-label">Bénéfice EUR:</span>
+          <span [ngClass]="{'profit-value': +netResultEUR > 0, 'loss-value': +netResultEUR < 0}">
+            {{ +netResultEUR | currency:'EUR':'symbol':'1.0-0' }}
+          </span>
+        </div>
+      </ng-container>
+      <ng-template #zeroNetResultEUR>
+        <div class="status-item result-item">
+          <span class="item-label">Bénéfice EUR:</span>
+          <span>{{ 0 | currency:'EUR':'symbol':'1.0-0' }}</span>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

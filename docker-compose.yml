@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Service PostgreSQL
+  postgres:
+    image: postgres:14-alpine
+    container_name: tradetracker-postgres
+    environment:
+      POSTGRES_USER: tradetracker
+      POSTGRES_PASSWORD: tradetracker
+      POSTGRES_DB: tradetracker
+    ports:
+      - "7432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend-tradetracker/db_schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - tradetracker-network
+    restart: unless-stopped
+
+  # # Service Backend
+  # backend:
+  #   build:
+  #     context: ./backend-tradetracker
+  #     dockerfile: Dockerfile
+  #   container_name: tradetracker-backend
+  #   environment:
+  #     NODE_ENV: development
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USER: tradetracker
+  #     DB_PASSWORD: tradetracker
+  #     DB_NAME: tradetracker
+  #     PORT: 3000
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./backend-tradetracker:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - tradetracker-network
+  #   restart: unless-stopped
+
+  # Service Frontend (optionnel)
+  # frontend:
+  #   build:
+  #     context: ./frontend-tradetracker
+  #     dockerfile: Dockerfile
+  #   container_name: tradetracker-frontend
+  #   ports:
+  #     - "4201:80"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - tradetracker-network
+  #   restart: unless-stopped
+
+networks:
+  tradetracker-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

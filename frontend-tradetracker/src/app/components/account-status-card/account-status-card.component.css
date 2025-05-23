@@ -1,0 +1,74 @@
+.status-card {
+  height: 100%;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.status-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  font-weight: 600;
+  text-align: center;
+  padding: 0.75rem;
+}
+
+.card-body {
+  padding: 0.5rem;
+}
+
+.status-count {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.status-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0.3rem;
+  font-size: 0.85rem;
+  border-bottom: 1px dotted rgba(234, 234, 234, 0.5);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.status-item:last-child {
+  border-bottom: none;
+}
+
+.item-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.item-value {
+  font-weight: 600;
+  font-size: 0.85em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.result-item {
+  margin-top: 0.5rem;
+  font-weight: 700;
+}
+
+.profit-value {
+  color: #28a745;
+}
+
+.loss-value {
+  color: #dc3545;
+}

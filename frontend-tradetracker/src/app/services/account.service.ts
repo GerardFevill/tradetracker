@@ -1,106 +1,59 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, map, tap, of } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap, catchError, of } from 'rxjs';
 import { Account, AccountSummary, Currency, Broker } from '../models/account.model';
+import { ErrorHandlerService } from './error-handler.service';
+import { NumberFormatter } from '../utils/number-formatter';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
-  private apiUrl = 'api/accounts';
+  private apiUrl = 'http://localhost:3000/api/accounts';
   private accountsSubject = new BehaviorSubject<Account[]>([]);
   accounts$ = this.accountsSubject.asObservable();
-  
-  // Données mockées pour simuler les réponses API
-  private mockAccounts: Account[] = [
-    {
-      id: '1',
-      name: 'Compte Trading Principal',
-      broker: 'Roboforex',
-      currency: 'USD',
-      currentBalance: 12450.75,
-      targetBalance: 15000,
-      withdrawalThreshold: 13000,
-      totalDeposits: 10000,
-      totalWithdrawals: 2000,
-      totalProfits: 5000,
-      totalLosses: 550,
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2025-04-28')
-    },
-    {
-      id: '2',
-      name: 'Compte EUR Stratégie',
-      broker: 'IC Markets',
-      currency: 'EUR',
-      currentBalance: 8750.50,
-      targetBalance: 10000,
-      withdrawalThreshold: 9000,
-      totalDeposits: 7500,
-      totalWithdrawals: 1000,
-      totalProfits: 2500,
-      totalLosses: 250,
-      createdAt: new Date('2024-02-10'),
-      updatedAt: new Date('2025-05-15')
-    },
-    {
-      id: '3',
-      name: 'Compte Test Algorithmes',
-      broker: 'Roboforex',
-      currency: 'USD',
-      currentBalance: 3200.25,
-      targetBalance: 5000,
-      withdrawalThreshold: 4000,
-      totalDeposits: 3000,
-      totalWithdrawals: 0,
-      totalProfits: 500,
-      totalLosses: 300,
-      createdAt: new Date('2024-03-05'),
-      updatedAt: new Date('2025-05-10')
-    },
-    {
-      id: '4',
-      name: 'Compte EUR Conservateur',
-      broker: 'Other',
-      currency: 'EUR',
-      currentBalance: 5150.80,
-      targetBalance: 6000,
-      withdrawalThreshold: 5500,
-      totalDeposits: 5000,
-      totalWithdrawals: 500,
-      totalProfits: 800,
-      totalLosses: 150,
-      createdAt: new Date('2024-04-20'),
-      updatedAt: new Date('2025-05-18')
-    },
-    {
-      id: '5',
-      name: 'Compte USD Agressif',
-      broker: 'IC Markets',
-      currency: 'USD',
-      currentBalance: 7820.45,
-      targetBalance: 10000,
-      withdrawalThreshold: 8500,
-      totalDeposits: 6000,
-      totalWithdrawals: 0,
-      totalProfits: 2200,
-      totalLosses: 380,
-      createdAt: new Date('2024-05-01'),
-      updatedAt: new Date('2025-05-19')
-    }
-  ];
 
-  constructor(private http: HttpClient) {
-    // Initialiser avec les données mockées au lieu d'appeler l'API
-    this.accountsSubject.next(this.mockAccounts);
+  constructor(
+    private http: HttpClient,
+    private errorHandler: ErrorHandlerService
+  ) {
+    // Charger les comptes depuis l'API au démarrage
+    this.loadAccounts();
   }
 
-  // Méthode mockée pour simuler le chargement des comptes depuis l'API
+  // Méthode pour charger les comptes depuis l'API
   private loadAccounts(): void {
-    // Simuler un délai de réseau
-    setTimeout(() => {
-      this.accountsSubject.next(this.mockAccounts);
-    }, 300);
+    this.refreshAccounts();
+  }
+  
+  // Méthode publique pour recharger les comptes depuis l'API
+  public refreshAccounts(): void {
+    this.http.get<Account[]>(this.apiUrl)
+      .pipe(
+        map(accounts => {
+          // Trier les comptes par ordre alphabétique selon leur nom
+          return accounts.sort((a, b) => a.name.localeCompare(b.name));
+        }),
+        catchError(error => {
+          // Utiliser le service de gestion d'erreurs pour afficher un message convivial
+          this.errorHandler.handleError(error, 'Impossible de charger les comptes');
+          // En cas d'erreur, on retourne un tableau vide pour éviter que l'application ne plante
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: (accounts) => {
+          // Si les comptes sont null ou undefined, on utilise un tableau vide
+          this.accountsSubject.next(accounts || []);
+        },
+        error: (error) => {
+          // Cette partie ne devrait jamais être exécutée grâce au catchError ci-dessus,
+          // mais on la garde par sécurité
+          console.error('Erreur non gérée lors du chargement des comptes:', error);
+          // En cas d'erreur non gérée, on s'assure que l'application continue de fonctionner
+          this.accountsSubject.next([]);
+        }
+      });
   }
 
   getAccounts(): Observable<Account[]> {
@@ -108,104 +61,172 @@ export class AccountService {
   }
 
   getAccountById(id: string): Observable<Account | undefined> {
-    return this.accounts$.pipe(
-      map(accounts => accounts.find(account => account.id === id))
+    return this.http.get<Account>(`${this.apiUrl}/${id}`).pipe(
+      catchError(error => {
+        console.error(`Erreur lors de la récupération du compte ${id}:`, error);
+        // Fallback sur le filtrage local si l'API échoue
+        return this.accounts$.pipe(
+          map(accounts => accounts.find(account => account.id === id))
+        );
+      })
     );
   }
 
   getAccountsByBroker(broker: string): Observable<Account[]> {
-    return this.accounts$.pipe(
-      map(accounts => accounts.filter(account => account.broker === broker))
+    return this.http.get<Account[]>(`${this.apiUrl}/broker/${broker}`).pipe(
+      catchError(error => {
+        console.error(`Erreur lors de la récupération des comptes pour le broker ${broker}:`, error);
+        // Fallback sur le filtrage local si l'API échoue
+        return this.accounts$.pipe(
+          map(accounts => accounts.filter(account => account.broker === broker))
+        );
+      })
     );
   }
 
   getAccountsByCurrency(currency: Currency): Observable<Account[]> {
-    return this.accounts$.pipe(
-      map(accounts => accounts.filter(account => account.currency === currency))
+    return this.http.get<Account[]>(`${this.apiUrl}/currency/${currency}`).pipe(
+      catchError(error => {
+        console.error(`Erreur lors de la récupération des comptes pour la devise ${currency}:`, error);
+        // Fallback sur le filtrage local si l'API échoue
+        return this.accounts$.pipe(
+          map(accounts => accounts.filter(account => account.currency === currency))
+        );
+      })
     );
   }
 
   createAccount(account: Omit<Account, 'id' | 'createdAt' | 'updatedAt'>): Observable<Account> {
-    // Simuler la création d'un compte avec un ID généré
-    const newAccount: Account = {
-      ...account as any,
-      id: Math.random().toString(36).substring(2, 11),
-      createdAt: new Date(),
-      updatedAt: new Date()
+    // S'assurer que la date de création est définie
+    const accountWithDate = {
+      ...account,
+      // La date de création sera gérée par le backend
     };
     
-    // Simuler un délai de réseau
-    return of(newAccount).pipe(
-      tap(createdAccount => {
-        const currentAccounts = this.accountsSubject.value;
-        this.accountsSubject.next([...currentAccounts, createdAccount]);
-      })
-    );
+    return this.http.post<Account>(this.apiUrl, accountWithDate)
+      .pipe(
+        tap(createdAccount => {
+          const currentAccounts = this.accountsSubject.value;
+          this.accountsSubject.next([...currentAccounts, createdAccount]);
+        }),
+        catchError(error => {
+          console.error('Erreur lors de la création du compte:', error);
+          throw error;
+        })
+      );
   }
 
   updateAccount(id: string, account: Partial<Account>): Observable<Account> {
-    // Trouver le compte à mettre à jour
-    const currentAccounts = this.accountsSubject.value;
-    const index = currentAccounts.findIndex(a => a.id === id);
+    // Formater les valeurs numériques pour éviter les erreurs de format
+    const formattedAccount: Partial<Account> = { ...account };
     
-    if (index === -1) {
-      return of(null as any);
+    if (formattedAccount.currentBalance !== undefined) {
+      formattedAccount.currentBalance = NumberFormatter.parseNumber(formattedAccount.currentBalance as any);
     }
     
-    // Créer le compte mis à jour
-    const updatedAccount: Account = {
-      ...currentAccounts[index],
-      ...account,
-      updatedAt: new Date()
-    };
+    if (formattedAccount.targetBalance !== undefined) {
+      formattedAccount.targetBalance = NumberFormatter.parseNumber(formattedAccount.targetBalance as any);
+    }
     
-    // Mettre à jour la liste des comptes
-    const updatedAccounts = [...currentAccounts];
-    updatedAccounts[index] = updatedAccount;
+    if (formattedAccount.withdrawalThreshold !== undefined) {
+      formattedAccount.withdrawalThreshold = NumberFormatter.parseNumber(formattedAccount.withdrawalThreshold as any);
+    }
     
-    // Simuler un délai de réseau
-    return of(updatedAccount).pipe(
-      tap(() => {
-        this.accountsSubject.next(updatedAccounts);
-      })
-    );
+    if (formattedAccount.totalDeposits !== undefined) {
+      formattedAccount.totalDeposits = NumberFormatter.parseNumber(formattedAccount.totalDeposits as any);
+    }
+    
+    if (formattedAccount.totalWithdrawals !== undefined) {
+      formattedAccount.totalWithdrawals = NumberFormatter.parseNumber(formattedAccount.totalWithdrawals as any);
+    }
+    
+    if (formattedAccount.totalProfits !== undefined) {
+      formattedAccount.totalProfits = NumberFormatter.parseNumber(formattedAccount.totalProfits as any);
+    }
+    
+    if (formattedAccount.totalLosses !== undefined) {
+      formattedAccount.totalLosses = NumberFormatter.parseNumber(formattedAccount.totalLosses as any);
+    }
+    
+    return this.http.put<Account>(`${this.apiUrl}/${id}`, formattedAccount)
+      .pipe(
+        tap(updatedAccount => {
+          const currentAccounts = this.accountsSubject.value;
+          const index = currentAccounts.findIndex(a => a.id === id);
+          
+          if (index !== -1) {
+            const updatedAccounts = [...currentAccounts];
+            updatedAccounts[index] = updatedAccount;
+            this.accountsSubject.next(updatedAccounts);
+          }
+        }),
+        catchError(error => {
+          console.error('Erreur lors de la mise à jour du compte:', error);
+          this.errorHandler.handleError(error, 'Erreur lors de la mise à jour du compte');
+          throw error;
+        })
+      );
   }
 
   deleteAccount(id: string): Observable<void> {
-    // Simuler un délai de réseau
-    return of(undefined).pipe(
-      tap(() => {
-        const currentAccounts = this.accountsSubject.value;
-        this.accountsSubject.next(currentAccounts.filter(account => account.id !== id));
-      })
-    );
+    return this.http.delete<void>(`${this.apiUrl}/${id}`)
+      .pipe(
+        tap(() => {
+          const currentAccounts = this.accountsSubject.value;
+          this.accountsSubject.next(currentAccounts.filter(account => account.id !== id));
+        }),
+        catchError(error => {
+          console.error('Erreur lors de la suppression du compte:', error);
+          throw error;
+        })
+      );
   }
 
   getAccountSummary(): Observable<AccountSummary> {
-    return this.accounts$.pipe(
-      map(accounts => {
-        const usdAccounts = accounts.filter(account => account.currency === 'USD');
-        const eurAccounts = accounts.filter(account => account.currency === 'EUR');
+    return this.http.get<AccountSummary>(`${this.apiUrl}/summary`)
+      .pipe(
+        catchError(error => {
+          console.error('Erreur lors de la récupération du résumé des comptes:', error);
+          
+          // Fallback sur le calcul local si l'API échoue
+          return this.accounts$.pipe(
+            map(accounts => {
+              const usdAccounts = accounts.filter(account => account.currency === 'USD');
+              const eurAccounts = accounts.filter(account => account.currency === 'EUR');
 
-        const totalBalanceUSD = usdAccounts.reduce((sum, account) => sum + account.currentBalance, 0);
-        const totalBalanceEUR = eurAccounts.reduce((sum, account) => sum + account.currentBalance, 0);
-        
-        const totalTargetUSD = usdAccounts.reduce((sum, account) => sum + account.targetBalance, 0);
-        const totalTargetEUR = eurAccounts.reduce((sum, account) => sum + account.targetBalance, 0);
-        
-        const performanceUSD = totalTargetUSD > 0 ? (totalBalanceUSD / totalTargetUSD) * 100 : 0;
-        const performanceEUR = totalTargetEUR > 0 ? (totalBalanceEUR / totalTargetEUR) * 100 : 0;
+              const totalBalanceUSD = usdAccounts.reduce((sum, account) => sum + account.currentBalance, 0);
+              const totalBalanceEUR = eurAccounts.reduce((sum, account) => sum + account.currentBalance, 0);
+              
+              const totalTargetUSD = usdAccounts.reduce((sum, account) => sum + account.targetBalance, 0);
+              const totalTargetEUR = eurAccounts.reduce((sum, account) => sum + account.targetBalance, 0);
+              
+              const performanceUSD = totalTargetUSD > 0 ? (totalBalanceUSD / totalTargetUSD) * 100 : 0;
+              const performanceEUR = totalTargetEUR > 0 ? (totalBalanceEUR / totalTargetEUR) * 100 : 0;
 
-        return {
-          totalAccounts: accounts.length,
-          totalBalanceUSD,
-          totalBalanceEUR,
-          totalTargetUSD,
-          totalTargetEUR,
-          performanceUSD,
-          performanceEUR
-        };
-      })
+              return {
+                totalAccounts: accounts.length,
+                totalBalanceUSD,
+                totalBalanceEUR,
+                totalTargetUSD,
+                totalTargetEUR,
+                performanceUSD,
+                performanceEUR
+              };
+            })
+          );
+        })
+      );
+  }
+
+  getTotalProfitsByAccount(accountId: string): Observable<number> {
+    return this.getAccountById(accountId).pipe(
+      map(account => account?.totalProfits || 0)
+    );
+  }
+  
+  getTotalLossesByAccount(accountId: string): Observable<number> {
+    return this.getAccountById(accountId).pipe(
+      map(account => account?.totalLosses || 0)
     );
   }
 }

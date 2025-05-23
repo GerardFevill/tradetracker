@@ -1,0 +1,85 @@
+<div class="vcard balance-history-vcard">
+  <div class="vcard-header">
+    <div class="vcard-title">
+      <i class="fas fa-chart-line"></i>
+      <span>Évolution des Soldes</span>
+    </div>
+    <div class="period-selector">
+      <button class="period-btn" [ngClass]="{'active': selectedPeriod === '1w'}" (click)="changePeriod('1w')">1S</button>
+      <button class="period-btn" [ngClass]="{'active': selectedPeriod === '1m'}" (click)="changePeriod('1m')">1M</button>
+      <button class="period-btn" [ngClass]="{'active': selectedPeriod === '3m'}" (click)="changePeriod('3m')">3M</button>
+      <button class="period-btn" [ngClass]="{'active': selectedPeriod === '6m'}" (click)="changePeriod('6m')">6M</button>
+      <button class="period-btn" [ngClass]="{'active': selectedPeriod === '1y'}" (click)="changePeriod('1y')">1A</button>
+    </div>
+  </div>
+  
+  <div class="vcard-body">
+    <div class="chart-legend">
+      <div class="legend-item">
+        <span class="legend-color usd-color"></span>
+        <span>USD</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color eur-color"></span>
+        <span>EUR</span>
+      </div>
+    </div>
+    
+    <div class="balance-chart">
+      <div class="y-axis">
+        <div class="y-label">-{{ getMaxValue() | currency:'':'':'1.0-0' }}</div>
+        <div class="y-label">-{{ getMaxValue() / 2 | currency:'':'':'1.0-0' }}</div>
+        <div class="y-label zero-line">0</div>
+        <div class="y-label">{{ getMaxValue() / 2 | currency:'':'':'1.0-0' }}</div>
+        <div class="y-label">{{ getMaxValue() | currency:'':'':'1.0-0' }}</div>
+      </div>
+      
+      <div class="chart-area">
+        <!-- Lignes horizontales de la grille -->
+        <div class="grid-line" style="top: 0%;"></div> <!-- Ligne max positive -->
+        <div class="grid-line" style="top: 20%;"></div> <!-- Ligne moitié positive -->
+        <div class="grid-line highlight" style="top: 50%;"></div> <!-- Ligne du zéro -->
+        <div class="grid-line" style="top: 80%;"></div> <!-- Ligne moitié négative -->
+        <div class="grid-line" style="bottom: 0%;"></div> <!-- Ligne max négative -->
+        
+        <!-- Barres du graphique -->
+        <div class="month-column" *ngFor="let data of balanceHistory; let i = index">
+          <div class="bar-group">
+            <!-- Barre USD -->
+            <div class="bar usd-bar" 
+                 [class.negative-bar]="data.usd < 0"
+                 [style.height.%]="getBarHeight(data.usd)"
+                 [style.bottom.%]="getBarPosition(data.usd)"
+                 [style.top.%]="data.usd < 0 ? 50 : null"
+                 [class.animate]="true"
+                 [style.animation-delay.ms]="i * 100">
+              <div class="bar-tooltip" [class.negative]="data.usd < 0">
+                {{ data.usd | currency:'USD':'symbol':'1.0-0' }}
+              </div>
+            </div>
+            
+            <!-- Barre EUR -->
+            <div class="bar eur-bar" 
+                 [class.negative-bar]="data.eur < 0"
+                 [style.height.%]="getBarHeight(data.eur)"
+                 [style.bottom.%]="getBarPosition(data.eur)"
+                 [style.top.%]="data.eur < 0 ? 50 : null"
+                 [class.animate]="true"
+                 [style.animation-delay.ms]="i * 100 + 50">
+              <div class="bar-tooltip" [class.negative]="data.eur < 0">
+                {{ data.eur | currency:'EUR':'symbol':'1.0-0' }}
+              </div>
+            </div>
+          </div>
+          <div class="x-label">{{ data.month }}</div>
+        </div>
+        
+        <!-- Message si aucune donnée -->
+        <div class="no-data" *ngIf="balanceHistory.length === 0">
+          <i class="fas fa-chart-area"></i>
+          <p>Aucune donnée disponible pour cette période</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
