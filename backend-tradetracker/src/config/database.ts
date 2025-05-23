@@ -1,11 +1,12 @@
 import { Pool } from 'pg';
 
-export const pool = new Pool({
-  user: process.env.DB_USER || 'tradetracker',
+// Configuration de la connexion à PostgreSQL
+const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'tradetracker',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  user: process.env.DB_USER || 'tradetracker',
   password: process.env.DB_PASSWORD || 'tradetracker',
-  port: parseInt(process.env.DB_PORT || '7432'),
+  database: process.env.DB_NAME || 'tradetracker',
 });
 
 // Fonction pour tester la connexion à la base de données
@@ -20,3 +21,5 @@ export const testConnection = async (): Promise<boolean> => {
     return false;
   }
 };
+
+export default pool;

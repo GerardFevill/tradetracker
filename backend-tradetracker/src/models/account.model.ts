@@ -1,10 +1,29 @@
+export type Currency = 'USD' | 'EUR';
+export type Broker = 'Roboforex' | 'IC Markets' | 'Other';
+
 export interface Account {
   id: string;
-  broker: string;
-  currency: string;
-  current_balance: number;
-  target_balance: number;
-  withdraw_threshold: number;
-  total_deposits: number;
-  total_withdrawals: number;
+  name: string;
+  broker: Broker;
+  currency: Currency;
+  currentBalance: number;
+  targetBalance: number;
+  withdrawalThreshold: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalProfits: number;
+  totalLosses: number;
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+}
+
+export interface AccountSummary {
+  totalAccounts: number;
+  totalBalanceUSD: number;
+  totalBalanceEUR: number;
+  totalTargetUSD: number;
+  totalTargetEUR: number;
+  performanceUSD: number; // Percentage
+  performanceEUR: number; // Percentage
 }
