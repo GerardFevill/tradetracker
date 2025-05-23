@@ -113,7 +113,8 @@ jobs:
 
   # Job pour construire l'image frontend
   build-frontend:
-    needs: prepare-metadata
+    # Attend que le job build-backend soit terminé
+    needs: [prepare-metadata, build-backend]
     # N'exécute ce job que si des fichiers du frontend ont été modifiés
     if: |
       github.event_name == 'workflow_dispatch' ||
@@ -213,7 +214,8 @@ jobs:
 
   # Job pour publier l'image frontend sur Docker Hub
   publish-frontend:
-    needs: [prepare-metadata, build-frontend]
+    # Attend que le job publish-backend soit terminé
+    needs: [prepare-metadata, build-frontend, publish-backend]
     # N'exécute ce job que si le job de build frontend a été exécuté
     if: needs.build-frontend.outputs.run_job == 'true'
     runs-on: ubuntu-latest
