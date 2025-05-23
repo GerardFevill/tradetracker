@@ -1,4 +1,4 @@
-FROM node:18-alpine as build
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
@@ -8,11 +8,13 @@ RUN npm install
 
 COPY . .
 
+# Construction avec le mode production pour optimiser le build
 RUN npm run build
 
 FROM nginx:alpine
 
-COPY --from=build /app/dist/frontend-tradetracker /usr/share/nginx/html
+# Correction du chemin de sortie selon angular.json
+COPY --from=build /app/dist/tradetracker /usr/share/nginx/html
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

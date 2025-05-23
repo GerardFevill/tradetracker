@@ -15,9 +15,19 @@ on:
   # Permet de déclencher manuellement le workflow depuis l'interface GitHub
   workflow_dispatch:
 
+# Variables globales
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+
 jobs:
-  build-and-push:
+  # Job pour extraire les informations de version
+  prepare-metadata:
     runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.vars.outputs.date }}
+      short_sha: ${{ steps.vars.outputs.short_sha }}
+      frontend_version: ${{ steps.vars.outputs.frontend_version }}
+      backend_version: ${{ steps.vars.outputs.backend_version }}
     
     steps:
       - name: Checkout code
@@ -45,47 +55,212 @@ jobs:
           else
             echo "backend_version=1.0.0" >> $GITHUB_OUTPUT
           fi
+
+  # Job pour construire l'image backend
+  build-backend:
+    needs: prepare-metadata
+    # N'exécute ce job que si des fichiers du backend ont été modifiés
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, 'backend') ||
+      contains(github.event.pull_request.title, 'backend') ||
+      contains(github.event.commits[0].message, 'backend') ||
+      contains(github.event.commits[*].modified, 'backend-tradetracker/')
+    runs-on: ubuntu-latest
+    outputs:
+      image_digest: ${{ steps.build.outputs.digest }}
+      run_job: 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       
+      # Construction de l'image backend (Express.js) sans push
+      - name: Build backend image
+        id: build
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend-tradetracker
+          push: false
+          load: true
+          tags: |
+            tradetracker-backend:latest
+            tradetracker-backend:${{ needs.prepare-metadata.outputs.backend_version }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:latest
+          cache-to: type=inline
+      
+      # Enregistrement de l'image pour utilisation ultérieure
+      - name: Export backend image
+        run: |
+          mkdir -p /tmp/images
+          docker save tradetracker-backend:latest -o /tmp/images/backend-image.tar
+      
+      # Stockage de l'image pour le job de publication
+      - name: Upload backend image artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-image
+          path: /tmp/images/backend-image.tar
+          retention-days: 1
+      
+      # Notification de succès (optionnel)
+      - name: Notification de build backend
+        if: success()
+        run: echo "Image Docker backend construite avec succès"
+
+  # Job pour construire l'image frontend
+  build-frontend:
+    needs: prepare-metadata
+    # N'exécute ce job que si des fichiers du frontend ont été modifiés
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, 'frontend') ||
+      contains(github.event.pull_request.title, 'frontend') ||
+      contains(github.event.commits[0].message, 'frontend') ||
+      contains(github.event.commits[*].modified, 'frontend-tradetracker/')
+    runs-on: ubuntu-latest
+    outputs:
+      image_digest: ${{ steps.build.outputs.digest }}
+      run_job: 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      # Construction de l'image frontend (Angular) sans push
+      - name: Build frontend image
+        id: build
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend-tradetracker
+          push: false
+          load: true
+          tags: |
+            tradetracker-frontend:latest
+            tradetracker-frontend:${{ needs.prepare-metadata.outputs.frontend_version }}
+          cache-from: type=registry,ref=${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:latest
+          cache-to: type=inline
+      
+      # Enregistrement de l'image pour utilisation ultérieure
+      - name: Export frontend image
+        run: |
+          mkdir -p /tmp/images
+          docker save tradetracker-frontend:latest -o /tmp/images/frontend-image.tar
+      
+      # Stockage de l'image pour le job de publication
+      - name: Upload frontend image artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-image
+          path: /tmp/images/frontend-image.tar
+          retention-days: 1
+      
+      # Notification de succès (optionnel)
+      - name: Notification de build frontend
+        if: success()
+        run: echo "Image Docker frontend construite avec succès"
+
+  # Job pour publier l'image backend sur Docker Hub
+  publish-backend:
+    needs: [prepare-metadata, build-backend]
+    # N'exécute ce job que si le job de build backend a été exécuté
+    if: needs.build-backend.outputs.run_job == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-      # Construction et publication de l'image backend (Express.js)
-      - name: Build and push backend image
-        uses: docker/build-push-action@v4
+      # Téléchargement de l'image backend construite
+      - name: Download backend image
+        uses: actions/download-artifact@v3
         with:
-          context: ./backend-tradetracker
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.backend_version }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.date }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.short_sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.backend_version }}-${{ steps.vars.outputs.date }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:latest
-          cache-to: type=inline
+          name: backend-image
+          path: /tmp/images
       
-      # Construction et publication de l'image frontend (Angular)
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend-tradetracker
-          push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.frontend_version }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.date }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.short_sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.frontend_version }}-${{ steps.vars.outputs.date }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:latest
-          cache-to: type=inline
+      # Chargement de l'image dans Docker
+      - name: Load backend image
+        run: docker load -i /tmp/images/backend-image.tar
       
-      # Notification de succès (optionnel)
-      - name: Notification de déploiement
+      # Tag et push des images backend
+      - name: Tag and push backend image
+        run: |
+          docker tag tradetracker-backend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:latest
+          docker tag tradetracker-backend:${{ needs.prepare-metadata.outputs.backend_version }} ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.backend_version }}
+          docker tag tradetracker-backend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.date }}
+          docker tag tradetracker-backend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.short_sha }}
+          docker tag tradetracker-backend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.backend_version }}-${{ needs.prepare-metadata.outputs.date }}
+          
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:latest
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.backend_version }}
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.date }}
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.short_sha }}
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ needs.prepare-metadata.outputs.backend_version }}-${{ needs.prepare-metadata.outputs.date }}
+      
+      # Notification de succès
+      - name: Notification de publication backend
         if: success()
-        run: echo "Images Docker publiées avec succès sur Docker Hub: ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend et ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend"
+        run: echo "Image Docker backend publiée avec succès sur Docker Hub"
+
+  # Job pour publier l'image frontend sur Docker Hub
+  publish-frontend:
+    needs: [prepare-metadata, build-frontend]
+    # N'exécute ce job que si le job de build frontend a été exécuté
+    if: needs.build-frontend.outputs.run_job == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      # Téléchargement de l'image frontend construite
+      - name: Download frontend image
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-image
+          path: /tmp/images
+      
+      # Chargement de l'image dans Docker
+      - name: Load frontend image
+        run: docker load -i /tmp/images/frontend-image.tar
+      
+      # Tag et push des images frontend
+      - name: Tag and push frontend image
+        run: |
+          docker tag tradetracker-frontend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:latest
+          docker tag tradetracker-frontend:${{ needs.prepare-metadata.outputs.frontend_version }} ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.frontend_version }}
+          docker tag tradetracker-frontend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.date }}
+          docker tag tradetracker-frontend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.short_sha }}
+          docker tag tradetracker-frontend:latest ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.frontend_version }}-${{ needs.prepare-metadata.outputs.date }}
+          
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:latest
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.frontend_version }}
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.date }}
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.short_sha }}
+          docker push ${{ env.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ needs.prepare-metadata.outputs.frontend_version }}-${{ needs.prepare-metadata.outputs.date }}
+      
+      # Notification de succès
+      - name: Notification de publication frontend
+        if: success()
+        run: echo "Image Docker frontend publiée avec succès sur Docker Hub"
+
+  # Job de notification finale qui s'exécute après les deux publications
+  notify-completion:
+    needs: [publish-backend, publish-frontend]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Notification finale
+        run: echo "Toutes les images Docker ont été construites et publiées avec succès sur Docker Hub"
