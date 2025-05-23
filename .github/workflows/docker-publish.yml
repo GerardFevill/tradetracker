@@ -1,0 +1,91 @@
+name: Build and Publish Docker Images
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend-tradetracker/**'
+      - 'backend-tradetracker/**'
+      - '.github/workflows/docker-publish.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'frontend-tradetracker/**'
+      - 'backend-tradetracker/**'
+  # Permet de déclencher manuellement le workflow depuis l'interface GitHub
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      # Extraction des informations de version
+      - name: Set version variables
+        id: vars
+        run: |
+          echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          # Extraction de la version depuis package.json du frontend
+          if [ -f "./frontend-tradetracker/package.json" ]; then
+            FRONTEND_VERSION=$(grep '"version":' ./frontend-tradetracker/package.json | cut -d '"' -f 4)
+            echo "frontend_version=$FRONTEND_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_version=1.0.0" >> $GITHUB_OUTPUT
+          fi
+          # Extraction de la version depuis package.json du backend
+          if [ -f "./backend-tradetracker/package.json" ]; then
+            BACKEND_VERSION=$(grep '"version":' ./backend-tradetracker/package.json | cut -d '"' -f 4)
+            echo "backend_version=$BACKEND_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "backend_version=1.0.0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      # Construction et publication de l'image backend (Express.js)
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend-tradetracker
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.backend_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.date }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.short_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:${{ steps.vars.outputs.backend_version }}-${{ steps.vars.outputs.date }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend:latest
+          cache-to: type=inline
+      
+      # Construction et publication de l'image frontend (Angular)
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend-tradetracker
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.frontend_version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.date }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.short_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:${{ steps.vars.outputs.frontend_version }}-${{ steps.vars.outputs.date }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend:latest
+          cache-to: type=inline
+      
+      # Notification de succès (optionnel)
+      - name: Notification de déploiement
+        if: success()
+        run: echo "Images Docker publiées avec succès sur Docker Hub: ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-frontend et ${{ secrets.DOCKERHUB_USERNAME }}/tradetracker-backend"
