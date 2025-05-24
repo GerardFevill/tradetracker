@@ -3,6 +3,9 @@ frontend-tradetracker/.angular/
 frontend-tradetracker/dist/
 frontend-tradetracker/node_modules/
 
+/.angular
+/.angular/cache
+
 # etracker directory
 etracker/
 
