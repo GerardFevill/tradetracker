@@ -1,6 +1,9 @@
 <div class="transactions-container">
   <div class="header">
     <h2>Historique des Transactions</h2>
+    <button class="btn btn-primary" (click)="refreshData()">
+      <i class="refresh-icon">↻</i> Actualiser
+    </button>
   </div>
   
   <div class="filters">
@@ -11,6 +14,8 @@
         <button class="btn" [class.active]="selectedType === 'deposit'" (click)="filterByType('deposit')">Dépôts</button>
         <button class="btn" [class.active]="selectedType === 'withdrawal'" (click)="filterByType('withdrawal')">Retraits</button>
         <button class="btn" [class.active]="selectedType === 'transfer'" (click)="filterByType('transfer')">Transferts</button>
+        <button class="btn" [class.active]="selectedType === 'profit'" (click)="filterByType('profit')">Profits</button>
+        <button class="btn" [class.active]="selectedType === 'loss'" (click)="filterByType('loss')">Pertes</button>
       </div>
     </div>
     
@@ -32,7 +37,70 @@
     </div>
   </div>
   
-  <div class="summary-section" *ngIf="filteredTransactions$ | async as transactions">
+  <!-- Indicateur de chargement - utilisation d'une variable locale pour éviter l'erreur ExpressionChangedAfterItHasBeenCheckedError -->
+  <ng-container *ngIf="(loading$ | async) as isLoading">
+    <ng-container *ngIf="(filteredTransactions$ | async) as transactions">
+      <div class="loading-container" *ngIf="isLoading && !transactions.length">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Chargement des transactions...</div>
+      </div>
+    </ng-container>
+  </ng-container>
+  
+  <!-- Message d'erreur -->
+  <div class="error-container" *ngIf="(error$ | async) as errorMessage">
+    <div class="error-icon">⚠️</div>
+    <div class="error-message">{{ errorMessage }}</div>
+    <button class="btn btn-outline-primary" (click)="refreshData()">
+      <i class="refresh-icon">↻</i> Réessayer
+    </button>
+  </div>
+  
+  <!-- Modal de confirmation pour la suppression -->
+  <div class="modal-overlay" *ngIf="showDeleteConfirmation">
+    <div class="confirmation-modal">
+      <div class="modal-header">
+        <h3>Confirmation de suppression</h3>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer cette transaction ?</p>
+        <div class="transaction-details-confirm" *ngIf="transactionToDelete">
+          <div class="detail-row">
+            <span class="detail-label">Type:</span>
+            <span class="detail-value">{{ getTransactionTypeLabel(transactionToDelete.type) }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Montant:</span>
+            <span class="detail-value" [ngClass]="{
+              'positive': transactionToDelete.type === 'deposit' || transactionToDelete.type === 'profit',
+              'negative': transactionToDelete.type === 'withdrawal' || transactionToDelete.type === 'loss'
+            }">
+              {{ transactionToDelete.amount | currency:transactionToDelete.currency }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Compte:</span>
+            <span class="detail-value">{{ transactionToDelete.accountName }}</span>
+          </div>
+          <div class="detail-row" *ngIf="transactionToDelete.date">
+            <span class="detail-label">Date:</span>
+            <span class="detail-value">{{ transactionToDelete.date | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </div>
+        <div class="warning-message">
+          <i class="warning-icon">⚠️</i>
+          <span>Cette action est irréversible et supprimera définitivement la transaction.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="cancelDelete()">Annuler</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Résumé des transactions -->
+  <div class="summary-section" *ngIf="(filteredTransactions$ | async) as transactions">
     <div class="summary-card" *ngIf="transactions.length > 0">
       <div class="summary-header">Résumé</div>
       <div class="summary-body">
@@ -53,63 +121,22 @@
     </div>
   </div>
   
-  <div class="transactions-list" *ngIf="filteredTransactions$ | async as transactions">
-    <div *ngIf="transactions.length === 0" class="no-transactions">
-      Aucune transaction ne correspond aux critères sélectionnés.
+  <div class="transactions-list" *ngIf="(filteredTransactions$ | async) as transactions">
+    <div *ngIf="transactions.length === 0 && !(loading$ | async) && !(error$ | async)" class="no-transactions">
+      <div class="empty-icon">💳</div>
+      <div class="empty-message">Aucune transaction ne correspond aux critères sélectionnés.</div>
+      <button class="btn btn-outline-primary" (click)="resetFilters()">
+        Réinitialiser les filtres
+      </button>
     </div>
     
-    <div class="transaction-item" *ngFor="let transaction of transactions">
-      <div class="transaction-icon" [ngClass]="{
-        'deposit-icon': transaction.type === 'deposit' || (transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId && selectedAccountId !== 'all'),
-        'withdrawal-icon': transaction.type === 'withdrawal' || (transaction.type === 'transfer' && transaction.accountId === selectedAccountId),
-        'transfer-icon': transaction.type === 'transfer' && selectedAccountId === 'all'
-      }">
-        <i class="icon">{{ 
-          transaction.type === 'deposit' ? '↑' : 
-          transaction.type === 'withdrawal' ? '↓' : 
-          transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId ? '↑' :
-          transaction.type === 'transfer' && transaction.accountId === selectedAccountId ? '↓' : '↔'
-        }}</i>
-      </div>
-      
-      <div class="transaction-details">
-        <div class="transaction-header">
-          <span class="transaction-type">{{ 
-            transaction.type === 'deposit' ? 'Dépôt' : 
-            transaction.type === 'withdrawal' ? 'Retrait' : 
-            transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId ? 'Transfert entrant' :
-            transaction.type === 'transfer' && transaction.accountId === selectedAccountId ? 'Transfert sortant' : 'Transfert'
-          }}</span>
-          <span class="transaction-date">{{ transaction.date | date:'dd/MM/yyyy HH:mm' }}</span>
-        </div>
-        
-        <div class="transaction-account">
-          <span class="account-name">{{ transaction.accountName }}</span>
-          <span class="badge" [ngClass]="{'badge-usd': transaction.currency === 'USD', 'badge-eur': transaction.currency === 'EUR'}">
-            {{ transaction.currency }}
-          </span>
-        </div>
-        
-        <div class="transaction-amount" [ngClass]="{
-          'positive': transaction.type === 'deposit' || (transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId),
-          'negative': transaction.type === 'withdrawal' || (transaction.type === 'transfer' && transaction.accountId === selectedAccountId && transaction.targetAccountId !== selectedAccountId),
-          'neutral': transaction.type === 'transfer' && selectedAccountId === 'all'
-        }">
-          {{ 
-            (transaction.type === 'deposit' || (transaction.type === 'transfer' && transaction.targetAccountId === selectedAccountId)) ? '+' : 
-            (transaction.type === 'withdrawal' || (transaction.type === 'transfer' && transaction.accountId === selectedAccountId && transaction.targetAccountId !== selectedAccountId)) ? '-' : ''
-          }} {{ transaction.amount | currency:transaction.currency }}
-        </div>
-        
-        <div class="transaction-description" *ngIf="transaction.description">
-          {{ transaction.description }}
-        </div>
-      </div>
-      
-      <div class="transaction-actions">
-        <button class="btn btn-primary" [routerLink]="['/accounts', transaction.accountId]">Voir le compte</button>
-        <button class="btn btn-danger" (click)="deleteTransaction(transaction)">Supprimer</button>
-      </div>
-    </div>
+    <!-- Utilisation du composant transaction-item pour chaque transaction -->
+    <app-transaction-item 
+      *ngFor="let transaction of transactions; trackBy: trackByTransactionId" 
+      [transaction]="transaction"
+      [selectedAccountId]="selectedAccountId"
+      (edit)="editTransaction($event)"
+      (delete)="deleteTransaction($event)"
+    ></app-transaction-item>
   </div>
 </div>

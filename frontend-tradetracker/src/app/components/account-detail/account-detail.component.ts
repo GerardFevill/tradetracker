@@ -68,8 +68,24 @@ export class AccountDetailComponent implements OnInit {
     // Vérifier s'il y a une action spécifiée dans les paramètres de requête
     const action = this.route.snapshot.queryParamMap.get('action');
     const shouldScroll = this.route.snapshot.queryParamMap.get('scroll') === 'true';
+    const editTransactionId = this.route.snapshot.queryParamMap.get('editTransaction');
     
-    if (action === 'deposit' || action === 'transfer' || action === 'withdrawal') {
+    // Vérifier si on doit éditer une transaction existante
+    if (editTransactionId) {
+      // Charger les données du compte et des transactions d'abord
+      this.loadAccountDetails();
+      
+      // Attendre que les transactions soient chargées avant de chercher celle à éditer
+      this.transactions$.subscribe(transactions => {
+        const transactionToEdit = transactions.find(t => t.id === editTransactionId);
+        if (transactionToEdit) {
+          // Ouvrir le formulaire en mode édition avec la transaction trouvée
+          this.editTransaction(transactionToEdit);
+        }
+      });
+    }
+    // Sinon, vérifier s'il y a une action pour ajouter une nouvelle transaction
+    else if (action === 'deposit' || action === 'transfer' || action === 'withdrawal' || action === 'profit' || action === 'loss') {
       this.showTransactionForm = true;
       
       // Définir le type de transaction en fonction de l'action
@@ -94,7 +110,7 @@ export class AccountDetailComponent implements OnInit {
         // Faire défiler uniquement si le paramètre scroll est présent
         if (shouldScroll) {
           setTimeout(() => {
-            // Cibler directement le titre de la section
+            // Cibler le titre "Historique des Transactions"
             const titleElement = document.getElementById('transactions-title');
             if (titleElement) {
               // Calculer la position du titre par rapport au haut de la page
@@ -102,12 +118,13 @@ export class AccountDetailComponent implements OnInit {
               const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
               const titlePosition = rect.top + scrollTop;
               
-              // Tenir compte de la hauteur du menu (environ 60px)
+              // Tenir compte de la hauteur du menu (environ 60px) et ajouter un espace au-dessus
               const menuHeight = 60;
+              const additionalSpace = 20; // Espace supplémentaire au-dessus du titre
               
-              // Faire défiler jusqu'à la position calculée moins la hauteur du menu
+              // Faire défiler jusqu'à la position calculée
               window.scrollTo({
-                top: titlePosition - menuHeight - 20, // 20px d'espace supplémentaire
+                top: titlePosition - menuHeight - additionalSpace,
                 behavior: 'smooth'
               });
             }
@@ -272,38 +289,33 @@ export class AccountDetailComponent implements OnInit {
     
     // Réinitialiser le formulaire avec les valeurs spécifiées ou par défaut
     this.transactionForm.reset(defaultValues);
-    
-    // Réinitialiser le mode d'édition
     this.isEditMode = false;
     this.currentTransactionId = null;
-      
-      // Faire défiler jusqu'à la section d'historique des transactions si demandé
-      if (scroll) {
-        setTimeout(() => {
-          // Cibler directement le titre de la section
-          const titleElement = document.getElementById('transactions-title');
-          if (titleElement) {
-            // Calculer la position du titre par rapport au haut de la page
-            const rect = titleElement.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const titlePosition = rect.top + scrollTop;
-            
-            // Tenir compte de la hauteur du menu (environ 60px)
-            const menuHeight = 60;
-            
-            // Faire défiler jusqu'à la position calculée moins la hauteur du menu
-            window.scrollTo({
-              top: titlePosition - menuHeight - 20, // 20px d'espace supplémentaire
-              behavior: 'smooth'
-            });
-          }
-        }, 100);
-      }
+    
+    // Faire défiler jusqu'au titre "Historique des Transactions" si demandé
+    if (scroll) {
+      setTimeout(() => {
+        // Cibler le titre "Historique des Transactions"
+        const titleElement = document.getElementById('transactions-title');
+        if (titleElement) {
+          // Calculer la position du titre par rapport au haut de la page
+          const rect = titleElement.getBoundingClientRect();
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          const titlePosition = rect.top + scrollTop;
+          
+          // Tenir compte de la hauteur du menu (environ 60px) et ajouter un espace au-dessus
+          const menuHeight = 60;
+          const additionalSpace = 20; // Espace supplémentaire au-dessus du titre
+          
+          // Faire défiler jusqu'à la position calculée
+          window.scrollTo({
+            top: titlePosition - menuHeight - additionalSpace,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
     }
-  
-  /**
-   * Ajoute ou met à jour une transaction
-   */
+  }
   /**
    * Recharge les données du compte et des transactions
    */
@@ -516,11 +528,25 @@ export class AccountDetailComponent implements OnInit {
       targetAccountId: transaction.targetAccountId || ''
     });
     
-    // Faire défiler jusqu'au formulaire
+    // Faire défiler jusqu'au titre "Historique des Transactions"
     setTimeout(() => {
-      const formElement = document.getElementById('transaction-form');
-      if (formElement) {
-        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Cibler le titre "Historique des Transactions"
+      const titleElement = document.getElementById('transactions-title');
+      if (titleElement) {
+        // Calculer la position du titre par rapport au haut de la page
+        const rect = titleElement.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const titlePosition = rect.top + scrollTop;
+        
+        // Tenir compte de la hauteur du menu (environ 60px) et ajouter un espace au-dessus
+        const menuHeight = 60;
+        const additionalSpace = 20; // Espace supplémentaire au-dessus du titre
+        
+        // Faire défiler jusqu'à la position calculée
+        window.scrollTo({
+          top: titlePosition - menuHeight - additionalSpace,
+          behavior: 'smooth'
+        });
       }
     }, 100);
   }

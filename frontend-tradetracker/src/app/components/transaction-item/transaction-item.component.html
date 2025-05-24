@@ -1,0 +1,40 @@
+<div class="transaction-item">
+  <!-- Icône de la transaction -->
+  <div class="transaction-icon" [ngClass]="getIconClass()">
+    <i class="icon">{{ getIcon() }}</i>
+  </div>
+  
+  <!-- Détails de la transaction (version compacte) -->
+  <div class="transaction-details">
+    <div class="transaction-header">
+      <span class="transaction-type">{{ getTransactionTypeLabel() }}</span>
+      <span class="transaction-date">{{ transaction.date | date:'dd/MM/yyyy' }}</span>
+    </div>
+    
+    <div class="transaction-info">
+      <div class="account-info">
+        <span class="account-name">{{ transaction.accountName }}</span>
+        <span class="badge" [ngClass]="{'badge-usd': transaction.currency === 'USD', 'badge-eur': transaction.currency === 'EUR'}">{{ transaction.currency }}</span>
+        
+        <!-- Compte de destination (compact) -->
+        <span class="target-info" *ngIf="transaction.type === 'transfer' && transaction.targetAccountName">
+          → {{ transaction.targetAccountName }}
+        </span>
+      </div>
+      
+      <div class="transaction-amount" [ngClass]="getAmountClass()">
+        {{ getAmountPrefix() }} {{ transaction.amount | currency:transaction.currency }}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Actions -->
+  <div class="transaction-actions">
+    <button class="btn-icon edit-btn" (click)="onEdit()" title="Modifier cette transaction">
+      <i class="edit-icon">✎</i>
+    </button>
+    <button class="btn-icon delete-btn" (click)="onDelete()" title="Supprimer cette transaction">
+      <i class="delete-icon">×</i>
+    </button>
+  </div>
+</div>

@@ -20,7 +20,7 @@ services:
 
   # Service Backend
   backend:
-    image: amesika2/tradetracker-backend:1.0.1
+    image: amesika2/tradetracker-backend:latest
     container_name: tradetracker-backend
     environment:
       NODE_ENV: ${NODE_ENV}
@@ -43,24 +43,19 @@ services:
 
   # Service Frontend avec Nginx intégré
   frontend:
-    image: amesika2/tradetracker-frontend:1.0.2
+    image: amesika2/tradetracker-frontend:latest
     container_name: tradetracker-frontend
     ports:
-      - "80:80"
-      - "443:443"
+      - "4201:80"
     depends_on:
       - backend
     environment:
-      # Configuration pour utiliser le proxy Nginx intégré
-      API_URL: /api
-    volumes:
-      - ./frontend-tradetracker/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./nginx/ssl:/etc/nginx/ssl
+      # Configuration pour utiliser le nom du service backend dans le réseau Docker
+      # Le port 3000 est le port interne du conteneur backend
+      API_URL: http://backend:3000
     networks:
       - tradetracker-network
     restart: unless-stopped
-    
-
 
 networks:
   tradetracker-network:

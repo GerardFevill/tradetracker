@@ -61,32 +61,13 @@ export class DashboardComponent implements OnInit {
   inactiveAccountsNetResultEUR$!: Observable<number>;
   totalNetResultUSD$!: Observable<number>;
   totalNetResultEUR$!: Observable<number>;
-  
-  // Données pour les graphiques
-  accountsByBroker$!: Observable<{broker: string, count: number, percentage: number}[]>;
-  accountsByCurrency$!: Observable<{currency: string, count: number, percentage: number}[]>;
-  
-  // Données pour les graphiques
-  netResultHistory: {month: string, usd: number, eur: number}[] = [];
 
   constructor(
     private accountService: AccountService,
     private analyticsService: AnalyticsService
   ) {}
   
-  // Couleurs pour les graphiques
-  private brokerColors = [
-    '#0969da', // bleu
-    '#2ea043', // vert
-    '#dbab09', // jaune
-    '#a371f7', // violet
-    '#fa7970'  // rouge
-  ];
-  
-  // Retourne une couleur pour un broker en fonction de son index
-  getBrokerColor(index: number): string {
-    return this.brokerColors[index % this.brokerColors.length];
-  }
+  // Aucune méthode de couleur nécessaire car les graphiques ont été supprimés
 
   ngOnInit(): void {
     this.accountSummary$ = this.accountService.getAccountSummary();
@@ -142,12 +123,8 @@ export class DashboardComponent implements OnInit {
     this.totalNetResultUSD$ = this.analyticsService.getTotalNetResultByCurrency('USD');
     this.totalNetResultEUR$ = this.analyticsService.getTotalNetResultByCurrency('EUR');
     
-    // Initialiser les données pour les graphiques
-    
-    this.analyticsService.getNetResultHistory().subscribe(data => {
-      this.netResultHistory = data;
-      console.log('Historique des résultats nets chargé:', this.netResultHistory);
-    });
+    // Initialiser les données pour les performances récentes
+    this.recentPerformance$ = this.analyticsService.getRecentPerformance();
     
     // Ajouter des logs pour déboguer les valeurs
     this.accountService.getAccounts().subscribe(accounts => {
@@ -175,43 +152,6 @@ export class DashboardComponent implements OnInit {
     this.activeAccountsBalanceEUR$.subscribe(balance => console.log('Solde EUR des comptes actifs:', balance));
     this.activeAccountsNetResult$.subscribe(result => console.log('Résultat net des comptes actifs:', result));
     
-    // Données pour les performances récentes
-    this.recentPerformance$ = this.analyticsService.getRecentPerformance();
-    
-    // Calcul des comptes par broker
-    this.accountsByBroker$ = this.accountService.getAccounts().pipe(
-      map(accounts => {
-        const brokers = accounts.reduce((acc, account) => {
-          acc[account.broker] = (acc[account.broker] || 0) + 1;
-          return acc;
-        }, {} as {[key: string]: number});
-        
-        const total = accounts.length;
-        
-        return Object.entries(brokers).map(([broker, count]) => ({
-          broker,
-          count,
-          percentage: (count / total) * 100
-        }));
-      })
-    );
-    
-    // Calcul des comptes par devise
-    this.accountsByCurrency$ = this.accountService.getAccounts().pipe(
-      map(accounts => {
-        const currencies = accounts.reduce((acc, account) => {
-          acc[account.currency] = (acc[account.currency] || 0) + 1;
-          return acc;
-        }, {} as {[key: string]: number});
-        
-        const total = accounts.length;
-        
-        return Object.entries(currencies).map(([currency, count]) => ({
-          currency,
-          count,
-          percentage: (count / total) * 100
-        }));
-      })
-    );
+    // Aucun calcul supplémentaire nécessaire car les graphiques ont été supprimés
   }
 }

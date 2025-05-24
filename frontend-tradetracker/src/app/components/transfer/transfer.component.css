@@ -42,6 +42,34 @@
   color: var(--text-color);
 }
 
+/* Wrapper pour les sélecteurs */
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Styles spécifiques pour les sélecteurs */
+select.form-control {
+  appearance: auto; /* Restaure l'apparence native du sélecteur */
+  height: 42px; /* Hauteur fixe pour éviter les problèmes d'affichage */
+  padding-right: 30px; /* Espace pour la flèche déroulante */
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  text-overflow: ellipsis; /* Ajoute des points de suspension pour le texte trop long */
+  white-space: nowrap; /* Empêche le texte de passer à la ligne */
+  overflow: hidden; /* Cache le texte débordant */
+}
+
+/* Style pour les options du sélecteur */
+select.form-control option {
+  padding: 8px;
+  font-size: 16px;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+}
+
 .form-control.invalid {
   border-color: var(--danger-color);
 }

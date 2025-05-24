@@ -29,6 +29,7 @@ import { WithdrawalSettingsComponent } from './components/withdrawal-settings/wi
 // Pipes
 import { FilterPipe } from './pipes/filter.pipe';
 import { BalanceHistoryComponent } from './components/balance-history/balance-history.component';
+import { TransactionItemComponent } from './components/transaction-item/transaction-item.component';
 
 @NgModule({
   declarations: [
@@ -44,7 +45,8 @@ import { BalanceHistoryComponent } from './components/balance-history/balance-hi
     WithdrawalSettingsComponent,
     AccountStatusCardComponent,
     FilterPipe,
-    BalanceHistoryComponent
+    BalanceHistoryComponent,
+    TransactionItemComponent
   ],
   imports: [
     BrowserModule,

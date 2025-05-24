@@ -14,6 +14,10 @@ export class TransactionService {
   private apiUrl = 'http://localhost:3000/api/transactions';
   private transactionsSubject = new BehaviorSubject<Transaction[]>([]);
   transactions$ = this.transactionsSubject.asObservable();
+  
+  // Variable pour stocker la transaction à éditer
+  private transactionToEditSubject = new BehaviorSubject<Transaction | null>(null);
+  transactionToEdit$ = this.transactionToEditSubject.asObservable();
 
   constructor(
     private http: HttpClient,
@@ -26,10 +30,26 @@ export class TransactionService {
 
   // Méthode pour charger les transactions depuis l'API
   private loadTransactions(): void {
+    console.log('Chargement des transactions depuis l\'API...');
+    
     this.http.get<Transaction[]>(this.apiUrl)
       .pipe(
+        map(transactions => {
+          console.log('Transactions reçues de l\'API:', transactions ? transactions.length : 0);
+          
+          // Vérification et nettoyage des données
+          if (!transactions) return [];
+          
+          // Conversion des montants en nombres
+          return transactions.map(transaction => ({
+            ...transaction,
+            amount: typeof transaction.amount === 'string' ? 
+              Number(transaction.amount) : transaction.amount
+          }));
+        }),
         catchError(error => {
           // Utiliser le service de gestion d'erreurs pour afficher un message convivial
+          console.error('Erreur lors du chargement des transactions:', error);
           this.errorHandler.handleError(error, 'Impossible de charger les transactions');
           // En cas d'erreur, on retourne un tableau vide pour éviter que l'application ne plante
           return of([]);
@@ -37,8 +57,9 @@ export class TransactionService {
       )
       .subscribe({
         next: (transactions) => {
-          // Si les transactions sont null ou undefined, on utilise un tableau vide
-          this.transactionsSubject.next(transactions || []);
+          console.log('Mise à jour du subject avec', transactions.length, 'transactions');
+          // Mise à jour du subject avec les transactions traitées
+          this.transactionsSubject.next(transactions);
         },
         error: (error) => {
           // Cette partie ne devrait jamais être exécutée grâce au catchError ci-dessus,
@@ -52,6 +73,11 @@ export class TransactionService {
 
   getTransactions(): Observable<Transaction[]> {
     return this.transactions$;
+  }
+  
+  // Méthode pour forcer le rechargement des transactions
+  refreshTransactions(): void {
+    this.loadTransactions();
   }
 
   getTransactionsByAccount(accountId: string): Observable<Transaction[]> {
@@ -197,5 +223,15 @@ export class TransactionService {
           .reduce((sum, t) => sum + t.amount, 0)
       )
     );
+  }
+  
+  // Méthode pour stocker une transaction à éditer
+  setTransactionToEdit(transaction: Transaction | null): void {
+    this.transactionToEditSubject.next(transaction);
+  }
+  
+  // Méthode pour récupérer la transaction à éditer
+  getTransactionToEdit(): Observable<Transaction | null> {
+    return this.transactionToEdit$;
   }
 }

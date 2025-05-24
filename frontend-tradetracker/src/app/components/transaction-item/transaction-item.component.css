@@ -1,0 +1,224 @@
+.transaction-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin-bottom: 0;
+  border-left: 4px solid transparent;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.transaction-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-hover);
+}
+
+/* Styles d'icônes pour différents types de transactions */
+.transaction-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.deposit-icon {
+  background-color: rgba(46, 160, 67, 0.15);
+  color: var(--success-color);
+}
+
+.withdrawal-icon {
+  background-color: rgba(234, 67, 53, 0.15);
+  color: var(--danger-color);
+}
+
+.transfer-icon {
+  background-color: rgba(66, 133, 244, 0.15);
+  color: var(--primary-color);
+}
+
+.icon {
+  font-size: 20px;
+  font-style: normal;
+}
+
+/* Détails de la transaction */
+.transaction-details {
+  flex: 1;
+  min-width: 0; /* Permet aux textes longs de s'adapter */
+}
+
+.transaction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.transaction-type {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.transaction-date {
+  color: var(--secondary-color);
+  font-size: 14px;
+}
+
+.transaction-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.account-name {
+  font-size: 14px;
+  color: var(--text-color);
+  margin-right: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-usd {
+  background-color: rgba(46, 160, 67, 0.15);
+  color: var(--success-color);
+}
+
+.badge-eur {
+  background-color: rgba(66, 133, 244, 0.15);
+  color: var(--primary-color);
+}
+
+/* Compte de destination pour les transferts */
+.target-info {
+  color: var(--secondary-color);
+  font-size: 12px;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* Montant de la transaction */
+.transaction-amount {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.positive {
+  color: var(--success-color);
+}
+
+.negative {
+  color: var(--danger-color);
+}
+
+.neutral {
+  color: var(--primary-color);
+}
+
+/* Description de la transaction */
+.transaction-description {
+  font-size: 14px;
+  color: var(--secondary-color);
+  font-style: italic;
+  word-break: break-word;
+}
+
+/* Actions */
+.transaction-actions {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.edit-btn {
+  color: var(--primary-color);
+  opacity: 0.5;
+  margin-right: 4px;
+}
+
+.edit-btn:hover {
+  background-color: rgba(66, 133, 244, 0.15);
+  opacity: 1;
+}
+
+.delete-btn {
+  color: var(--danger-color);
+  opacity: 0.5;
+}
+
+.delete-btn:hover {
+  background-color: rgba(234, 67, 53, 0.15);
+  opacity: 1;
+}
+
+.edit-icon,
+.delete-icon {
+  font-size: 16px;
+  font-style: normal;
+}
+
+/* Responsive design */
+@media (max-width: 576px) {
+  .transaction-item {
+    flex-wrap: wrap;
+  }
+  
+  .transaction-icon {
+    margin-right: 8px;
+  }
+  
+  .transaction-details {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .transaction-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .transaction-amount {
+    margin-top: 4px;
+  }
+  
+  .transaction-actions {
+    margin-left: auto;
+    margin-top: 0;
+  }
+}

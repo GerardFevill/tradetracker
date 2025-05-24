@@ -199,7 +199,7 @@ export class AccountsComponent implements OnInit {
         scroll: 'true' 
       } 
     });
-    this.notificationService.info('Préparation du formulaire de dépôt...');
+    // Notification supprimée pour éviter les interruptions
   }
   
   /**
@@ -212,7 +212,7 @@ export class AccountsComponent implements OnInit {
         scroll: 'true' 
       } 
     });
-    this.notificationService.info('Préparation du formulaire de retrait...');
+    // Notification supprimée pour éviter les interruptions
   }
   
   /**
@@ -231,7 +231,7 @@ export class AccountsComponent implements OnInit {
               scroll: 'true'
             } 
           });
-          this.notificationService.info('Préparation du formulaire de transfert...');
+          // Notification supprimée pour éviter les interruptions
         }
       },
       error => {
@@ -251,7 +251,7 @@ export class AccountsComponent implements OnInit {
         scroll: 'true' 
       } 
     });
-    this.notificationService.info('Préparation du formulaire d’enregistrement de gain...');
+    // Notification supprimée pour éviter les interruptions
   }
   
   /**
@@ -264,7 +264,7 @@ export class AccountsComponent implements OnInit {
         scroll: 'true' 
       } 
     });
-    this.notificationService.info('Préparation du formulaire d’enregistrement de perte...');
+    // Notification supprimée pour éviter les interruptions
   }
   
   /**

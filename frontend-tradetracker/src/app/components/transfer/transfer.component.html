@@ -8,17 +8,20 @@
     <form [formGroup]="transferForm" (ngSubmit)="onSubmit()">
       <div class="form-group">
         <label for="sourceAccountId">Compte source *</label>
-        <select 
-          id="sourceAccountId" 
-          formControlName="sourceAccountId"
-          class="form-control"
-          [ngClass]="{'invalid': transferForm.get('sourceAccountId')?.invalid && transferForm.get('sourceAccountId')?.touched}"
-        >
-          <option value="">Sélectionnez un compte</option>
-          <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
-            {{ account.name }} ({{ account.currentBalance | currency:account.currency }})
-          </option>
-        </select>
+        <div class="select-wrapper">
+          <select 
+            id="sourceAccountId" 
+            formControlName="sourceAccountId"
+            class="form-control"
+            [ngClass]="{'invalid': transferForm.get('sourceAccountId')?.invalid && transferForm.get('sourceAccountId')?.touched}"
+            aria-label="Sélectionner le compte source"
+          >
+            <option value="" disabled>Sélectionnez un compte</option>
+            <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
+              {{ account.name }} ({{ account.currentBalance | currency:account.currency }})
+            </option>
+          </select>
+        </div>
         <div class="error-message" *ngIf="transferForm.get('sourceAccountId')?.invalid && transferForm.get('sourceAccountId')?.touched">
           Veuillez sélectionner un compte source.
         </div>
@@ -26,17 +29,20 @@
       
       <div class="form-group">
         <label for="targetAccountId">Compte destination *</label>
-        <select 
-          id="targetAccountId" 
-          formControlName="targetAccountId"
-          class="form-control"
-          [ngClass]="{'invalid': transferForm.get('targetAccountId')?.invalid && transferForm.get('targetAccountId')?.touched}"
-        >
-          <option value="">Sélectionnez un compte</option>
-          <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
-            {{ account.name }} ({{ account.currentBalance | currency:account.currency }})
-          </option>
-        </select>
+        <div class="select-wrapper">
+          <select 
+            id="targetAccountId" 
+            formControlName="targetAccountId"
+            class="form-control"
+            [ngClass]="{'invalid': transferForm.get('targetAccountId')?.invalid && transferForm.get('targetAccountId')?.touched}"
+            aria-label="Sélectionner le compte destination"
+          >
+            <option value="" disabled>Sélectionnez un compte</option>
+            <option *ngFor="let account of (accounts$ | async)" [value]="account.id">
+              {{ account.name }} ({{ account.currentBalance | currency:account.currency }})
+            </option>
+          </select>
+        </div>
         <div class="error-message" *ngIf="transferForm.get('targetAccountId')?.invalid && transferForm.get('targetAccountId')?.touched">
           Veuillez sélectionner un compte destination.
         </div>
