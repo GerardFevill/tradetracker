@@ -47,12 +47,16 @@ services:
     container_name: tradetracker-frontend
     ports:
       - "4201:80"
+      - "4202:443"
     depends_on:
       - backend
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/ssl:/etc/nginx/ssl
     environment:
       # Configuration pour utiliser le nom du service backend dans le réseau Docker
       # Le port 3000 est le port interne du conteneur backend
-      API_URL: http://backend:3000
+      API_URL: http://backend:3000/api
     networks:
       - tradetracker-network
     restart: unless-stopped

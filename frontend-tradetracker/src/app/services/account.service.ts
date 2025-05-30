@@ -4,12 +4,13 @@ import { BehaviorSubject, Observable, map, tap, catchError, of } from 'rxjs';
 import { Account, AccountSummary, Currency, Broker } from '../models/account.model';
 import { ErrorHandlerService } from './error-handler.service';
 import { NumberFormatter } from '../utils/number-formatter';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
-  private apiUrl = 'http://localhost:3000/api/accounts';
+  private apiUrl = `${environment.apiUrl}/accounts`;
   private accountsSubject = new BehaviorSubject<Account[]>([]);
   accounts$ = this.accountsSubject.asObservable();
 

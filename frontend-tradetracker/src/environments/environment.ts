@@ -1,6 +1,6 @@
 // Environnement par défaut (développement)
 export const environment = {
   production: false,
-  apiUrl: '/api', // Utilise le proxy configuré dans proxy.conf.json
+  apiUrl: 'http://192.168.56.10:3000/api', // URL directe vers l'API
   appName: 'TradeTracker (Dev)'
 };

@@ -6,12 +6,13 @@ import { Currency } from '../models/account.model';
 import { ErrorHandlerService } from './error-handler.service';
 import { NumberFormatter } from '../utils/number-formatter';
 import { AccountService } from './account.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TransactionService {
-  private apiUrl = 'http://localhost:3000/api/transactions';
+  private apiUrl = `${environment.apiUrl}/transactions`;
   private transactionsSubject = new BehaviorSubject<Transaction[]>([]);
   transactions$ = this.transactionsSubject.asObservable();
   
