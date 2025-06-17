@@ -30,6 +30,7 @@ export class AddAccountComponent implements OnInit {
       broker: ['Roboforex', Validators.required],
       currency: ['USD', Validators.required],
       currentBalance: [0, [Validators.required, Validators.min(0)]],
+      initialCapital: [0, [Validators.required, Validators.min(0)]],
       targetBalance: [0, [Validators.required, Validators.min(0)]],
       withdrawalThreshold: [0, [Validators.required, Validators.min(0)]],
       otherBroker: ['']
@@ -65,6 +66,7 @@ export class AddAccountComponent implements OnInit {
       broker: broker,
       currency: formValue.currency,
       currentBalance: formValue.currentBalance,
+      initialCapital: formValue.initialCapital, // Capital initial fourni par l'utilisateur
       targetBalance: formValue.targetBalance,
       withdrawalThreshold: formValue.withdrawalThreshold,
       totalDeposits: formValue.currentBalance, // Initial deposit equals current balance

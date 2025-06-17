@@ -230,4 +230,24 @@ export class AccountService {
       map(account => account?.totalLosses || 0)
     );
   }
+
+  /**
+   * Récupère uniquement les comptes actifs
+   * @returns Observable contenant un tableau des comptes actifs
+   */
+  getActiveAccounts(): Observable<Account[]> {
+    return this.accounts$.pipe(
+      map(accounts => accounts.filter(account => account.isActive === true))
+    );
+  }
+
+  /**
+   * Récupère uniquement les comptes inactifs
+   * @returns Observable contenant un tableau des comptes inactifs
+   */
+  getInactiveAccounts(): Observable<Account[]> {
+    return this.accounts$.pipe(
+      map(accounts => accounts.filter(account => account.isActive === false))
+    );
+  }
 }

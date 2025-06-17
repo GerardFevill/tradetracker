@@ -4,11 +4,10 @@ import { Observable, switchMap, tap, of, map } from 'rxjs';
 import { AccountService } from '../../services/account.service';
 import { TransactionService } from '../../services/transaction.service';
 import { AnalyticsService } from '../../services/analytics.service';
-import { WithdrawalStrategyService } from '../../services/withdrawal-strategy.service';
 import { NotificationService } from '../../services/notification.service';
-import { Account } from '../../models/account.model';
+import { WithdrawalPlanService } from '../../services/withdrawal-plan.service';
+import { Account, WithdrawalAlert, WithdrawalStep } from '../../models/account.model';
 import { Transaction } from '../../models/transaction.model';
-import { WithdrawalRecommendation } from '../../models/withdrawal-rule.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 @Component({
@@ -25,8 +24,14 @@ export class AccountDetailComponent implements OnInit {
   roi$!: Observable<number>;
   withdrawalSuggestion$!: Observable<number>;
   
-  // Recommandation de retrait intelligent
-  withdrawalRecommendation$!: Observable<WithdrawalRecommendation | null>;
+  // Plan de retrait fixe
+  withdrawalPlan: WithdrawalStep[] = [];
+  withdrawalAlert: WithdrawalAlert | null = null;
+  withdrawalProgress: { currentLevel: number, nextLevel: number, progressPercent: number } = {
+    currentLevel: 0,
+    nextLevel: 20,
+    progressPercent: 0
+  };
   
   // Liste des comptes disponibles pour les transferts
   availableAccounts$!: Observable<Account[]>;
@@ -52,8 +57,8 @@ export class AccountDetailComponent implements OnInit {
     private accountService: AccountService,
     private transactionService: TransactionService,
     private analyticsService: AnalyticsService,
-    private withdrawalStrategyService: WithdrawalStrategyService,
     private notificationService: NotificationService,
+    private withdrawalPlanService: WithdrawalPlanService,
     private fb: FormBuilder
   ) {}
 
@@ -64,6 +69,9 @@ export class AccountDetailComponent implements OnInit {
       this.router.navigate(['/accounts']);
       return;
     }
+    
+    // Récupérer le plan de retrait fixe
+    this.withdrawalPlan = this.withdrawalPlanService.getWithdrawalPlan();
     
     // Vérifier s'il y a une action spécifiée dans les paramètres de requête
     const action = this.route.snapshot.queryParamMap.get('action');
@@ -107,73 +115,71 @@ export class AccountDetailComponent implements OnInit {
       setTimeout(() => {
         this.transactionForm.patchValue(transactionData);
         
-        // Faire défiler uniquement si le paramètre scroll est présent
+        // Faire défiler jusqu'au formulaire si demandé
         if (shouldScroll) {
-          setTimeout(() => {
-            // Cibler le titre "Historique des Transactions"
-            const titleElement = document.getElementById('transactions-title');
-            if (titleElement) {
-              // Calculer la position du titre par rapport au haut de la page
-              const rect = titleElement.getBoundingClientRect();
-              const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-              const titlePosition = rect.top + scrollTop;
-              
-              // Tenir compte de la hauteur du menu (environ 60px) et ajouter un espace au-dessus
-              const menuHeight = 60;
-              const additionalSpace = 20; // Espace supplémentaire au-dessus du titre
-              
-              // Faire défiler jusqu'à la position calculée
-              window.scrollTo({
-                top: titlePosition - menuHeight - additionalSpace,
-                behavior: 'smooth'
-              });
-            }
-          }, 100);
+          const formElement = document.getElementById('transaction-form');
+          if (formElement) {
+            formElement.scrollIntoView({ behavior: 'smooth' });
+          }
         }
-      }, 0);
+      }, 100);
     }
     
-    // Charger tous les comptes pour avoir les noms disponibles pour les transferts
+    // Charger les données du compte et des transactions
+    this.loadAccountDetails();
+    
+    // Initialiser les formulaires
+    this.initTransactionForm();
+    
+    // Formulaire pour modifier le seuil de retrait
+    this.thresholdForm = this.fb.group({
+      withdrawalThreshold: [0, [Validators.required, Validators.min(0)]]
+    });
+    
+    // Formulaire pour modifier l'objectif du compte
+    this.targetForm = this.fb.group({
+      targetBalance: [0, [Validators.required, Validators.min(0)]]
+    });
+    
+    // Charger la liste des comptes disponibles pour les transferts
     this.availableAccounts$ = this.accountService.getAccounts().pipe(
-      map(accounts => {
-        // Stocker les noms des comptes pour l'affichage
+      tap(accounts => {
+        this.accounts = accounts;
+        // Créer un dictionnaire des noms de comptes pour un accès facile
         accounts.forEach(account => {
           this.accountNames[account.id] = account.name;
         });
-        return accounts;
-      })
+      }),
+      map(accounts => accounts.filter(a => a.id !== accountId && a.isActive))
     );
     
-    this.account$ = this.accountService.getAccountById(accountId).pipe(
-      tap(account => {
-        if (account) {
-          // Stocker l'instance du compte pour un accès facile
-          this.account = account;
-          
-          // Initialiser le formulaire de seuil avec les valeurs actuelles
-          this.thresholdForm = this.fb.group({
-            threshold: [account.withdrawalThreshold || 0, [Validators.required, Validators.min(0)]]
-          });
-          
-          // Initialiser le formulaire d'objectif avec les valeurs actuelles
-          this.targetForm = this.fb.group({
-            targetBalance: [account.targetBalance || 0, [Validators.required, Validators.min(0)]]
-          });
-        }
-      })
-    );
-    
-    this.transactions$ = this.transactionService.getTransactionsByAccount(accountId);
-    this.performance$ = this.analyticsService.getAccountPerformance(accountId);
-    this.profitLoss$ = this.analyticsService.getAccountProfitLoss(accountId);
-    this.roi$ = this.analyticsService.getAccountROI(accountId);
-    this.withdrawalSuggestion$ = this.analyticsService.getWithdrawalSuggestions(accountId);
-    
-    // Obtenir la recommandation de retrait intelligent
-    this.withdrawalRecommendation$ = this.withdrawalStrategyService.getWithdrawalRecommendation(accountId);
-    
-    // Initialize transaction form
-    this.initTransactionForm();
+    // Calculer les métriques de performance
+    this.account$.subscribe(account => {
+      if (account) {
+        this.account = account;
+        
+        // Initialiser les formulaires avec les valeurs actuelles
+        this.thresholdForm.patchValue({
+          withdrawalThreshold: account.withdrawalThreshold
+        });
+        
+        this.targetForm.patchValue({
+          targetBalance: account.targetBalance
+        });
+        
+        // Calculer les métriques de performance
+        this.performance$ = this.analyticsService.getAccountPerformance(account.id);
+        this.profitLoss$ = this.analyticsService.getAccountProfitLoss(account.id);
+        this.roi$ = this.analyticsService.getAccountROI(account.id);
+        this.withdrawalSuggestion$ = this.analyticsService.getWithdrawalSuggestions(account.id);
+        
+        // Vérifier si le compte a atteint un niveau du plan de retrait
+        this.withdrawalAlert = this.withdrawalPlanService.checkWithdrawalAlert(account);
+        
+        // Calculer la progression vers le prochain niveau
+        this.withdrawalProgress = this.withdrawalPlanService.getProgressToNextLevel(account);
+      }
+    });
   }
   
   initTransactionForm(): void {
@@ -234,16 +240,8 @@ export class AccountDetailComponent implements OnInit {
         this.targetForm.reset({ targetBalance });
         this.showTargetForm = false;
         
-        // Recalculer les recommandations de retrait avec le nouvel objectif
-        this.account$.pipe(
-          switchMap(account => {
-            if (!account) return of(null);
-            return this.withdrawalStrategyService.getWithdrawalRecommendation(account);
-          })
-        ).subscribe(recommendation => {
-          this.withdrawalRecommendation$ = of(recommendation);
-          this.notificationService.success('Objectif mis à jour avec succès. Les recommandations de retrait ont été recalculées.');
-        });
+        // Notification de mise à jour réussie
+        this.notificationService.success('Objectif mis à jour avec succès.');
       },
       error => {
         this.notificationService.error('Erreur lors de la mise à jour de l\'objectif.');
@@ -316,6 +314,7 @@ export class AccountDetailComponent implements OnInit {
       }, 100);
     }
   }
+  
   /**
    * Recharge les données du compte et des transactions
    */
@@ -331,20 +330,33 @@ export class AccountDetailComponent implements OnInit {
       tap(account => {
         if (account) {
           this.account = account;
+          
+          // Mettre à jour les formulaires avec les valeurs actuelles
+          this.thresholdForm.patchValue({
+            withdrawalThreshold: account.withdrawalThreshold
+          });
+          
+          this.targetForm.patchValue({
+            targetBalance: account.targetBalance
+          });
+          
+          // Calculer les métriques de performance
+          this.performance$ = this.analyticsService.getAccountPerformance(account.id);
+          this.profitLoss$ = this.analyticsService.getAccountProfitLoss(account.id);
+          this.roi$ = this.analyticsService.getAccountROI(account.id);
+          this.withdrawalSuggestion$ = this.analyticsService.getWithdrawalSuggestions(account.id);
+          
+          // Vérifier si le compte a atteint un niveau du plan de retrait
+          this.withdrawalAlert = this.withdrawalPlanService.checkWithdrawalAlert(account);
+          
+          // Calculer la progression vers le prochain niveau
+          this.withdrawalProgress = this.withdrawalPlanService.getProgressToNextLevel(account);
         }
       })
     );
     
     // Recharger les transactions
     this.transactions$ = this.transactionService.getTransactionsByAccount(accountId);
-    
-    // Recalculer les métriques
-    // Note: Ces méthodes doivent être implémentées dans le service AnalyticsService
-    // Pour l'instant, nous utilisons des observables vides
-    this.performance$ = of(0);
-    this.profitLoss$ = of(0);
-    this.roi$ = of(0);
-    this.withdrawalRecommendation$ = this.withdrawalStrategyService.getWithdrawalRecommendation(accountId);
   }
   
   /**

@@ -106,90 +106,108 @@
     </div>
   </div>
   
-  <div class="withdrawal-section">
-    <div class="card">
-      <div class="card-header">
-        <div class="header-with-action">
-          <span>Stratégie de Retrait Intelligent</span>
-          <a routerLink="/withdrawal-settings" class="settings-link">
-            <i class="fas fa-cog"></i> Paramètres
-          </a>
-        </div>
+  <!-- Section Plan de Retrait Fixe -->
+  <div class="card mt-4">
+    <div class="card-header">Plan de Retrait Fixe</div>
+    <div class="card-body">
+      <!-- Affichage du capital initial -->
+      <div class="info-row">
+        <span class="label">Capital initial:</span>
+        <span class="value">{{ account.initialCapital | currency:account.currency }}</span>
       </div>
-      <div class="card-body">
-        <div *ngIf="(withdrawalRecommendation$ | async) as recommendation" class="smart-withdrawal-section">
-          <!-- Informations financières principales -->
-          <div class="withdrawal-info-grid">
-            <div class="info-box">
-              <div class="info-box-label">Dépôt total</div>
-              <div class="info-box-value">{{ account.totalDeposits | currency:account.currency }}</div>
+      
+      <!-- Alerte de retrait si disponible -->
+      <div class="withdrawal-alert" *ngIf="withdrawalAlert">
+        <div class="alert alert-success">
+          <h5><i class="fas fa-trophy mr-2"></i>Félicitations! Niveau {{ withdrawalAlert.level }}% atteint</h5>
+          <p>Vous avez atteint un objectif de croissance significatif de votre capital initial de <strong>{{ account.initialCapital | currency:account.currency }}</strong>.</p>
+          <div class="withdrawal-details">
+            <div class="detail-item">
+              <span class="detail-label">Capital actuel:</span>
+              <span class="detail-value">{{ account.currentBalance | currency:account.currency }}</span>
             </div>
-            
-            <div class="info-box">
-              <div class="info-box-label">Gain total</div>
-              <div class="info-box-value positive">{{ account.currentBalance - account.totalDeposits | currency:account.currency }}</div>
+            <div class="detail-item">
+              <span class="detail-label">Profit réalisé:</span>
+              <span class="detail-value">{{ withdrawalAlert.profit | currency:account.currency }}</span>
             </div>
-            
-            <div class="info-box highlight">
-              <div class="info-box-label">Montant à retirer</div>
-              <div class="info-box-value accent">{{ recommendation.recommendedAmount | currency:account.currency }}</div>
-              <div class="info-box-subtitle">({{ recommendation.appliedRule.profitPercentageToWithdraw }}% des profits)</div>
+            <div class="detail-item">
+              <span class="detail-label">Montant à retirer:</span>
+              <span class="detail-value highlight">{{ withdrawalAlert.withdrawalAmount | currency:account.currency }}</span>
             </div>
-            
-            <div class="info-box">
-              <div class="info-box-label">Solde après retrait</div>
-              <div class="info-box-value">{{ recommendation.remainingBalance | currency:account.currency }}</div>
+            <div class="detail-item">
+              <span class="detail-label">Date:</span>
+              <span class="detail-value">{{ withdrawalAlert.date | date:'dd/MM/yyyy HH:mm' }}</span>
             </div>
           </div>
-          
-          <!-- Information sur la plage de capital applicable -->
-          <div class="applied-range-info">
-            <h4>Plage de capital applicable</h4>
-            <div class="range-details">
-              <div class="range-amount">
-                {{ recommendation.appliedRange.minAmount | currency:account.currency }} - {{ recommendation.appliedRange.maxAmount | currency:account.currency }}
+          <button class="btn btn-success mt-3" (click)="toggleTransactionForm('withdrawal', withdrawalAlert.withdrawalAmount, 'Retrait planifié - Niveau ' + withdrawalAlert.level + '%', true)">
+            <i class="fas fa-money-bill-wave mr-2"></i>Effectuer ce retrait
+          </button>
+        </div>
+      </div>
+      
+      <!-- Progression vers le prochain niveau -->
+      <div class="card mt-3">
+        <div class="card-header bg-light">
+          <h5 class="mb-0"><i class="fas fa-chart-line mr-2"></i>Plan de retrait fixe</h5>
+        </div>
+        <div class="card-body">
+          <!-- Information sur le capital initial -->
+          <div class="initial-capital-info mb-3">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="info-item">
+                  <span class="info-label">Capital initial:</span>
+                  <span class="info-value font-weight-bold">{{ account.initialCapital | currency:account.currency }}</span>
+                </div>
               </div>
-              <div class="range-rules">
-                <div class="rule-title">Règles de retrait :</div>
-                <div class="rule-list">
-                  <div class="rule-item" *ngFor="let rule of recommendation.appliedRange.withdrawalRules" 
-                       [ngClass]="{'active-rule': rule.targetPercentage === recommendation.appliedRule.targetPercentage}">
-                    <span class="rule-target">{{ rule.targetPercentage }}% de l'objectif :</span>
-                    <span class="rule-action">Retirer {{ rule.profitPercentageToWithdraw }}% des profits</span>
-                  </div>
+              <div class="col-md-6">
+                <div class="info-item">
+                  <span class="info-label">Objectif final:</span>
+                  <span class="info-value font-weight-bold">{{ account.targetBalance | currency:account.currency }}</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <!-- Bouton d'action -->
-          <div class="withdrawal-action">
-            <button type="button" class="btn btn-withdrawal" (click)="toggleTransactionForm('withdrawal', recommendation.recommendedAmount, 'Retrait intelligent recommandé', true)">
-              <i class="fas fa-hand-holding-usd action-icon"></i>Effectuer ce retrait
-            </button>
+          <!-- Barre de progression -->
+          <div class="progress-container mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="progress-label">Progression vers le niveau {{ withdrawalProgress.nextLevel }}%:</span>
+              <span class="progress-value font-weight-bold">{{ withdrawalProgress.progressPercent | number:'1.1-1' }}%</span>
+            </div>
+            <div class="progress" style="height: 10px;">
+              <div class="progress-bar bg-success" 
+                   [style.width.%]="withdrawalProgress.progressPercent"
+                   [attr.aria-valuenow]="withdrawalProgress.progressPercent"
+                   aria-valuemin="0" 
+                   aria-valuemax="100">
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Aucune recommandation disponible -->
-    <div class="card" *ngIf="!(withdrawalRecommendation$ | async)">
-      <div class="card-header">
-        <div class="header-with-action">
-          <span>Stratégie de Retrait Intelligent</span>
-          <a routerLink="/withdrawal-settings" class="settings-link">
-            <i class="fas fa-cog"></i> Paramètres
-          </a>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="no-recommendation">
-          <p>Aucune recommandation de retrait disponible pour le moment. Cela peut être dû à :</p>
-          <ul>
-            <li>Pas encore de profits suffisants</li>
-            <li>Objectif de compte non défini ou trop élevé</li>
-            <li>Progression insuffisante vers l'objectif</li>
-          </ul>
+          
+          <!-- Détails des niveaux -->
+          <div class="level-details">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="level-item">
+                  <span class="level-label">Niveau actuel:</span>
+                  <span class="level-value">{{ withdrawalProgress.currentLevel }}%</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="level-item">
+                  <span class="level-label">Prochain niveau:</span>
+                  <span class="level-value">{{ withdrawalProgress.nextLevel }}%</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="level-item">
+                  <span class="level-label">Objectif prochain niveau:</span>
+                  <span class="level-value">{{ account.initialCapital * (1 + withdrawalProgress.nextLevel/100) | currency:account.currency }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

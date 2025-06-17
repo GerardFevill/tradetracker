@@ -1,0 +1,100 @@
+.account-status-section {
+  background-color: #1e2130;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  margin-bottom: 20px;
+  color: #e1e1e6;
+  border: 1px solid #30363d;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.section-icon {
+  margin-right: 8px;
+  fill: #58a6ff;
+}
+
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.status-card {
+  background-color: #252a3a;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #30363d;
+}
+
+.status-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-icon {
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.active-icon {
+  background-color: rgba(63, 185, 80, 0.1);
+}
+
+.active-icon svg {
+  fill: #3fb950;
+}
+
+.inactive-icon {
+  background-color: rgba(248, 81, 73, 0.1);
+}
+
+.inactive-icon svg {
+  fill: #f85149;
+}
+
+.total-icon {
+  background-color: rgba(88, 166, 255, 0.1);
+}
+
+.total-icon svg {
+  fill: #58a6ff;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-title {
+  font-size: 0.9rem;
+  color: #8b949e;
+  margin-bottom: 8px;
+}
+
+.card-value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #e1e1e6;
+}
+
+@media (max-width: 768px) {
+  .status-cards {
+    grid-template-columns: 1fr;
+  }
+}

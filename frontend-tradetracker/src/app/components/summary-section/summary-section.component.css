@@ -1,0 +1,126 @@
+.summary-section {
+  background-color: #1e2130;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  margin-bottom: 20px;
+  color: #e1e1e6;
+  border: 1px solid #30363d;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.section-icon {
+  margin-right: 8px;
+  fill: #58a6ff;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.summary-card {
+  background-color: #252a3a;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #30363d;
+}
+
+.summary-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-icon {
+  background-color: rgba(88, 166, 255, 0.1);
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.accounts-icon svg {
+  fill: #58a6ff;
+}
+
+.usd-icon svg {
+  fill: #3fb950;
+}
+
+.eur-icon svg {
+  fill: #f0883e;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-title {
+  font-size: 0.9rem;
+  color: #8b949e;
+  margin-bottom: 4px;
+}
+
+.card-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #e1e1e6;
+}
+
+.card-details {
+  font-size: 0.85rem;
+}
+
+.target-info {
+  color: #8b949e;
+  margin-bottom: 6px;
+}
+
+.progress {
+  height: 8px;
+  background-color: rgba(88, 166, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3fb950, #58a6ff);
+  border-radius: 4px;
+  position: relative;
+}
+
+.progress-complete {
+  background: linear-gradient(90deg, #3fb950, #26a641);
+}
+
+.progress-text {
+  position: absolute;
+  right: 0;
+  top: -18px;
+  font-size: 0.75rem;
+  color: #8b949e;
+}
+
+@media (max-width: 768px) {
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+}

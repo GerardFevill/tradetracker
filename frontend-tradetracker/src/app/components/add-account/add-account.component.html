@@ -79,6 +79,26 @@
         </div>
         
         <div class="form-group">
+          <label for="initialCapital">Capital initial *</label>
+          <input 
+            type="number" 
+            id="initialCapital" 
+            formControlName="initialCapital"
+            class="form-control"
+            [ngClass]="{'invalid': accountForm.get('initialCapital')?.invalid && accountForm.get('initialCapital')?.touched}"
+          >
+          <div class="error-message" *ngIf="accountForm.get('initialCapital')?.invalid && accountForm.get('initialCapital')?.touched">
+            <span *ngIf="accountForm.get('initialCapital')?.errors?.['required']">Le capital initial est requis.</span>
+            <span *ngIf="accountForm.get('initialCapital')?.errors?.['min']">Le capital initial doit être positif ou nul.</span>
+          </div>
+          <div class="help-text">
+            Capital de départ pour calculer les objectifs du plan de retrait.
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
           <label for="targetBalance">Objectif *</label>
           <input 
             type="number" 
@@ -92,9 +112,8 @@
             <span *ngIf="accountForm.get('targetBalance')?.errors?.['min']">L'objectif doit être positif ou nul.</span>
           </div>
         </div>
-      </div>
-      
-      <div class="form-group">
+        
+        <div class="form-group">
         <label for="withdrawalThreshold">Seuil de retrait *</label>
         <input 
           type="number" 
@@ -110,6 +129,7 @@
         <div class="help-text">
           Lorsque le solde dépasse ce seuil, le système suggérera un retrait.
         </div>
+      </div>
       </div>
       
       <div class="form-actions">

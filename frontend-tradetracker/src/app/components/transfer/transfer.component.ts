@@ -78,14 +78,12 @@ export class TransferComponent implements OnInit {
         this.exchangeRate = 1;
       } else if (this.sourceAccount.currency === 'USD' && this.targetAccount.currency === 'EUR') {
         // Get USD to EUR rate from analytics service
-        this.analyticsService.getExchangeRates().subscribe((rates: { EUR_TO_USD: number, USD_TO_EUR: number }) => {
-          this.exchangeRate = rates.USD_TO_EUR;
-        });
+        const rates = this.analyticsService.getExchangeRates();
+        this.exchangeRate = rates.USD_TO_EUR;
       } else {
         // Get EUR to USD rate from analytics service
-        this.analyticsService.getExchangeRates().subscribe((rates: { EUR_TO_USD: number, USD_TO_EUR: number }) => {
-          this.exchangeRate = rates.EUR_TO_USD;
-        });
+        const rates = this.analyticsService.getExchangeRates();
+        this.exchangeRate = rates.EUR_TO_USD;
       }
     }
   }

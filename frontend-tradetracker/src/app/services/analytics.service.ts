@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, combineLatest, map, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { Account, Currency } from '../models/account.model';
+import { Account, AccountSummary, Currency, AccountWithWithdrawalInfo, WithdrawalStep } from '../models/account.model';
+import { Transaction, TransactionType } from '../models/transaction.model';
 import { AccountService } from './account.service';
 import { TransactionService } from './transaction.service';
 import { environment } from '../../environments/environment';
@@ -11,14 +12,20 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class AnalyticsService {
-  // Default exchange rate, should be updated from settings
+  // Taux de change fixes
   private exchangeRate = { EUR_TO_USD: 1.1, USD_TO_EUR: 0.91 };
-  
-  // Observable to track exchange rate changes
-  private exchangeRateSubject = new BehaviorSubject<{ EUR_TO_USD: number, USD_TO_EUR: number }>(this.exchangeRate);
 
   // URL de l'API depuis le fichier d'environnement
   private apiUrl = environment.apiUrl;
+
+    private withdrawalPlan: WithdrawalStep[] = [
+      { percentGoal: 20, withdrawalRate: 0.15 },
+      { percentGoal: 40, withdrawalRate: 0.25 },
+      { percentGoal: 60, withdrawalRate: 0.30 },
+      { percentGoal: 80, withdrawalRate: 0.35 },
+      { percentGoal: 90, withdrawalRate: 0.40 },
+      { percentGoal: 100, withdrawalRate: 0.50 },
+    ];
 
   constructor(
     private accountService: AccountService,
@@ -26,13 +33,8 @@ export class AnalyticsService {
     private http: HttpClient
   ) {}
 
-  setExchangeRates(eurToUsd: number, usdToEur: number): void {
-    this.exchangeRate = { EUR_TO_USD: eurToUsd, USD_TO_EUR: usdToEur };
-    this.exchangeRateSubject.next(this.exchangeRate);
-  }
-  
-  getExchangeRates(): Observable<{ EUR_TO_USD: number, USD_TO_EUR: number }> {
-    return this.exchangeRateSubject.asObservable();
+  getExchangeRates(): { EUR_TO_USD: number, USD_TO_EUR: number } {
+    return this.exchangeRate;
   }
 
   getAccountPerformance(accountId: string): Observable<number> {
@@ -60,11 +62,55 @@ export class AnalyticsService {
     );
   }
 
-  getAccountsAboveThreshold(): Observable<Account[]> {
+  /**
+   * Retourne les comptes qui ont atteint un palier du plan de retrait
+   * avec le montant de retrait recommandé
+   * @returns Liste des comptes qui ont atteint un palier avec les informations de retrait
+   */
+  getAccountsAboveThreshold(): Observable<AccountWithWithdrawalInfo[]> {
     return this.accountService.getAccounts().pipe(
-      map(accounts => accounts.filter(account => 
-        account.currentBalance >= account.withdrawalThreshold
-      ))
+      map(accounts => {
+        return accounts
+          .filter(account => {
+            // Vérifier que le compte a un capital initial et un objectif définis
+            if (!account.initialCapital || !account.targetBalance) return false;
+            
+            // Calculer le pourcentage de progression vers l'objectif
+            const progressPercent = ((account.currentBalance - account.initialCapital) / 
+                                   (account.targetBalance - account.initialCapital)) * 100;
+            
+            // Vérifier si le compte a atteint au moins le premier palier du plan
+            return progressPercent >= this.withdrawalPlan[0].percentGoal;
+          })
+          .map(account => {
+            // Calculer le profit absolu
+            const profit = account.currentBalance - account.initialCapital;
+            
+            // Trouver le palier le plus élevé atteint
+            const progressPercent = ((account.currentBalance - account.initialCapital) / 
+                                   (account.targetBalance - account.initialCapital)) * 100;
+            const highestStep = [...this.withdrawalPlan]
+              .reverse()
+              .find(step => progressPercent >= step.percentGoal);
+            
+            // Calculer le montant de retrait recommandé
+            if (highestStep) {
+              // Ajouter le montant de retrait recommandé comme propriété temporaire
+              const withdrawalAmount = profit * highestStep.withdrawalRate;
+              return {
+                ...account,
+                recommendedWithdrawal: Number(withdrawalAmount.toFixed(2)),
+                withdrawalRate: highestStep.withdrawalRate,
+                percentGoal: highestStep.percentGoal
+              } as AccountWithWithdrawalInfo;
+            }
+            
+            // Si aucun palier n'est atteint, retourner null pour filtrer ce compte
+            return null;
+          })
+          // Filtrer les valeurs null
+          .filter((account): account is AccountWithWithdrawalInfo => account !== null);
+      })
     );
   }
 
@@ -117,6 +163,51 @@ export class AnalyticsService {
         return account.currentBalance + totalWithdrawals - totalDeposits;
       })
     );
+  }
+  
+  /**
+   * Calcule la performance d'un compte (pour compatibilité avec le composant AccountDetailComponent)
+   * @param account Le compte pour lequel calculer la performance
+   * @returns La performance en pourcentage
+   */
+  calculatePerformance(account: Account): Observable<number> {
+    if (!account) return of(0);
+    return of(account.targetBalance > 0 
+      ? (account.currentBalance / account.targetBalance) * 100 
+      : 0);
+  }
+  
+  /**
+   * Calcule le profit/perte d'un compte (pour compatibilité avec le composant AccountDetailComponent)
+   * @param account Le compte pour lequel calculer le profit/perte
+   * @returns Le montant du profit/perte
+   */
+  calculateProfitLoss(account: Account): Observable<number> {
+    if (!account) return of(0);
+    // Utiliser directement les propriétés totalProfits et totalLosses du compte
+    return of((account.totalProfits || 0) - (account.totalLosses || 0));
+  }
+  
+  /**
+   * Calcule le ROI d'un compte (pour compatibilité avec le composant AccountDetailComponent)
+   * @param account Le compte pour lequel calculer le ROI
+   * @returns Le ROI en pourcentage
+   */
+  calculateROI(account: Account): Observable<number> {
+    if (!account || !account.initialCapital || account.initialCapital <= 0) return of(0);
+    const profit = (account.totalProfits || 0) - (account.totalLosses || 0);
+    return of((profit / account.initialCapital) * 100);
+  }
+  
+  /**
+   * Calcule la suggestion de retrait pour un compte (pour compatibilité avec le composant AccountDetailComponent)
+   * @param account Le compte pour lequel calculer la suggestion de retrait
+   * @returns Le montant suggéré pour le retrait
+   */
+  calculateWithdrawalSuggestion(account: Account): Observable<number> {
+    if (!account) return of(0);
+    return of(account.currentBalance > account.withdrawalThreshold ? 
+      account.currentBalance - account.withdrawalThreshold : 0);
   }
 
   getAccountROI(accountId: string): Observable<number> {
@@ -506,6 +597,44 @@ export class AnalyticsService {
         console.error('Erreur lors de la récupération de l\'historique des résultats nets:', error);
         // En cas d'erreur, retourner des données statiques comme fallback
         return of([]);
+      })
+    );
+  }
+
+  /**
+   * Récupère un résumé des comptes avec les totaux par devise et les performances
+   * @returns Un Observable contenant les informations de résumé des comptes
+   */
+  getAccountSummary(): Observable<AccountSummary> {
+    return combineLatest([
+      this.getTotalAccountsCount(),
+      this.getTotalBalanceByCurrency('USD'),
+      this.getTotalBalanceByCurrency('EUR'),
+      this.accountService.getAccounts()
+    ]).pipe(
+      map(([totalAccounts, totalBalanceUSD, totalBalanceEUR, accounts]) => {
+        // Calculer les objectifs totaux par devise
+        const totalTargetUSD = accounts
+          .filter(account => account.currency === 'USD' && account.targetBalance)
+          .reduce((total, account) => total + (account.targetBalance || 0), 0);
+
+        const totalTargetEUR = accounts
+          .filter(account => account.currency === 'EUR' && account.targetBalance)
+          .reduce((total, account) => total + (account.targetBalance || 0), 0);
+
+        // Calculer les performances par devise (en pourcentage)
+        const performanceUSD = totalTargetUSD > 0 ? (totalBalanceUSD / totalTargetUSD) * 100 : 0;
+        const performanceEUR = totalTargetEUR > 0 ? (totalBalanceEUR / totalTargetEUR) * 100 : 0;
+
+        return {
+          totalAccounts,
+          totalBalanceUSD,
+          totalBalanceEUR,
+          totalTargetUSD,
+          totalTargetEUR,
+          performanceUSD,
+          performanceEUR
+        };
       })
     );
   }

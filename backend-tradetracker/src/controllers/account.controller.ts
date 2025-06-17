@@ -74,6 +74,7 @@ export const createAccount = async (req: Request, res: Response) => {
       broker,
       currency,
       currentBalance,
+      initialCapital, // Nouveau champ pour le capital initial
       targetBalance,
       withdrawalThreshold,
       totalDeposits,
@@ -87,6 +88,7 @@ export const createAccount = async (req: Request, res: Response) => {
 
     // Arrondir toutes les valeurs numériques à deux décimales
     const roundedCurrentBalance = roundToTwoDecimals(currentBalance || 0);
+    const roundedInitialCapital = roundToTwoDecimals(initialCapital || roundedCurrentBalance); // Par défaut, utiliser le solde actuel
     const roundedTargetBalance = roundToTwoDecimals(targetBalance || 0);
     const roundedWithdrawalThreshold = roundToTwoDecimals(withdrawalThreshold || 0);
     const roundedTotalDeposits = roundToTwoDecimals(totalDeposits || 0);
@@ -96,16 +98,26 @@ export const createAccount = async (req: Request, res: Response) => {
 
     const result = await pool.query(
       `INSERT INTO accounts (
-        id, name, broker, currency, "currentBalance", "targetBalance", 
+        id, name, broker, currency, "currentBalance", "initialCapital", "targetBalance", 
         "withdrawalThreshold", "totalDeposits", "totalWithdrawals", 
         "totalProfits", "totalLosses", "createdAt", "updatedAt", "isActive"
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
       [
-        id, name, broker, currency, 
-        roundedCurrentBalance, roundedTargetBalance, roundedWithdrawalThreshold, 
-        roundedTotalDeposits, roundedTotalWithdrawals, 
-        roundedTotalProfits, roundedTotalLosses,
-        now, now, isActive
+        id,
+        name,
+        broker,
+        currency,
+        roundedCurrentBalance,
+        roundedInitialCapital,
+        roundedTargetBalance,
+        roundedWithdrawalThreshold,
+        roundedTotalDeposits,
+        roundedTotalWithdrawals,
+        roundedTotalProfits,
+        roundedTotalLosses,
+        now,
+        now,
+        isActive
       ]
     );
 
@@ -127,6 +139,7 @@ export const updateAccount = async (req: Request, res: Response) => {
       broker,
       currency,
       currentBalance,
+      initialCapital, // Nouveau champ pour le capital initial
       targetBalance,
       withdrawalThreshold,
       totalDeposits,
@@ -163,6 +176,10 @@ export const updateAccount = async (req: Request, res: Response) => {
     if (currentBalance !== undefined) {
       updateFields.push(`"currentBalance" = $${paramIndex++}`);
       updateValues.push(roundToTwoDecimals(currentBalance));
+    }
+    if (initialCapital !== undefined) {
+      updateFields.push(`"initialCapital" = $${paramIndex++}`);
+      updateValues.push(roundToTwoDecimals(initialCapital));
     }
     if (targetBalance !== undefined) {
       updateFields.push(`"targetBalance" = $${paramIndex++}`);

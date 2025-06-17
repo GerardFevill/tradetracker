@@ -7,6 +7,7 @@ export interface Account {
   broker: Broker;
   currency: Currency;
   currentBalance: number;
+  initialCapital: number; // Capital initial pour le plan de retrait fixe
   targetBalance: number;
   withdrawalThreshold: number;
   totalDeposits: number;

@@ -1,0 +1,51 @@
+<div class="account-status-section">
+  <h3 class="section-title">
+    <svg class="section-icon" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm3.82 1.636a.75.75 0 0 1 1.038.175l.007.009c.103.118.22.222.35.31.264.178.683.37 1.285.37.602 0 1.02-.192 1.285-.371.13-.088.247-.192.35-.31l.007-.008a.75.75 0 0 1 1.222.87l-.022.03a2.67 2.67 0 0 1-.596.607c-.469.361-1.158.634-2.246.634-1.088 0-1.777-.273-2.246-.634a2.67 2.67 0 0 1-.596-.607l-.022-.03a.75.75 0 0 1 .184-1.045ZM5.25 5.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm5.5 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"></path>
+    </svg>
+    Statut des comptes
+  </h3>
+  <div class="status-cards">
+    <div class="card status-card">
+      <div class="card-icon active-icon">
+        <svg viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+          <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm3.78-9.72a.751.751 0 0 0-.018-1.042.751.751 0 0 0-1.042-.018L6.75 9.19 5.28 7.72a.751.751 0 0 0-1.042.018.751.751 0 0 0-.018 1.042l2 2a.75.75 0 0 0 1.06 0Z"></path>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Comptes Actifs</div>
+        <div class="card-value" *ngIf="activeAccounts$ | async as activeAccounts">
+          {{ activeAccounts.length }}
+        </div>
+      </div>
+    </div>
+    
+    <div class="card status-card">
+      <div class="card-icon inactive-icon">
+        <svg viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+          <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16ZM5.78 4.22a.75.75 0 0 0-1.06 1.06L6.94 7.5 4.72 9.72a.75.75 0 1 0 1.06 1.06L8 8.56l2.22 2.22a.75.75 0 1 0 1.06-1.06L9.06 7.5l2.22-2.22a.75.75 0 0 0-1.06-1.06L8 6.44Z"></path>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Comptes Inactifs</div>
+        <div class="card-value" *ngIf="inactiveAccounts$ | async as inactiveAccounts">
+          {{ inactiveAccounts.length }}
+        </div>
+      </div>
+    </div>
+    
+    <div class="card status-card">
+      <div class="card-icon total-icon">
+        <svg viewBox="0 0 16 16" version="1.1" width="24" height="24" aria-hidden="true">
+          <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16Zm.25-11.25A1.75 1.75 0 1 0 6 8.25v1.5a.75.75 0 0 0 1.5 0v-1.5a.25.25 0 0 1 .25-.25h1.5a.75.75 0 0 0 0-1.5h-1Zm0 8.5a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z"></path>
+        </svg>
+      </div>
+      <div class="card-content">
+        <div class="card-title">Comptes Totaux</div>
+        <div class="card-value" *ngIf="accounts$ | async as accounts">
+          {{ accounts.length }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

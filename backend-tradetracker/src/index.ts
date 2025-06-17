@@ -1,3 +1,9 @@
+import dotenv from 'dotenv';
+
+// Charger les variables d'environnement
+// Le fichier .env.local aura priorité s'il existe (comportement par défaut de dotenv)
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import accountRoutes from './routes/account.routes';
@@ -21,6 +27,8 @@ app.get('/api/status', (req, res) => {
 
 // Récupérer le port depuis les variables d'environnement ou utiliser 3000 par défaut
 const PORT = process.env.PORT || 3000;
+console.log(`Port configuré: ${PORT}`);
+
 
 // Démarrer le serveur
 app.listen(PORT, async () => {

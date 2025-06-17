@@ -1,0 +1,142 @@
+/* Alerts section */
+.alerts-section {
+  background-color: #1e2130;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  margin-bottom: 20px;
+  color: #e1e1e6;
+}
+
+.alert-list {
+  margin-top: 16px;
+}
+
+.alert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background-color: #252a3a;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.alert-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-content strong {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.alert-content p {
+  margin: 4px 0;
+  font-size: 14px;
+  color: var(--secondary-color);
+}
+
+.alert-actions {
+  margin-left: 16px;
+}
+
+.section-icon {
+  margin-right: 8px;
+  fill: #58a6ff;
+}
+
+.empty-icon {
+  color: var(--secondary-color);
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.no-alerts {
+  color: var(--secondary-color);
+  font-style: italic;
+  padding: 24px 16px;
+  text-align: center;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-alerts p {
+  margin: 8px 0 0 0;
+}
+
+.broker-tag {
+  display: inline-block;
+  background-color: var(--border-color);
+  color: var(--secondary-color);
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-left: 8px;
+}
+
+.value-highlight {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.threshold-value {
+  font-weight: 600;
+  color: var(--info-color);
+}
+
+.suggestion-value {
+  font-weight: 600;
+  color: var(--success-color);
+}
+
+/* Section styles */
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Button styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: 1px solid var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-color-hover);
+  border-color: var(--primary-color-hover);
+}
+
+.icon {
+  margin-right: 6px;
+  color: currentColor;
+}

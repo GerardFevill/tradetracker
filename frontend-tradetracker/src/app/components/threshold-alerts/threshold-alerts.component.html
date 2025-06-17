@@ -1,0 +1,27 @@
+<div class="alerts-section">
+  <h3 class="section-title">
+    <i class="fa fa-exclamation-triangle section-icon" aria-hidden="true"></i>
+    Alertes de Plan de Retrait
+  </h3>
+  <div class="alert-list" *ngIf="accountsAboveThreshold$ | async as accountsAboveThreshold">
+    <div *ngIf="accountsAboveThreshold.length === 0" class="no-alerts">
+      <i class="fa fa-info-circle empty-icon" aria-hidden="true"></i>
+      <p>Aucun compte n'a atteint un palier du plan de retrait.</p>
+    </div>
+    <div *ngFor="let account of accountsAboveThreshold" class="alert-item">
+      <div class="alert-content">
+        <strong>{{ account.name }}</strong> <span class="broker-tag">{{ account.broker }}</span>
+        <p>Capital initial: <span class="threshold-value">{{ account.initialCapital | currency:account.currency }}</span></p>
+        <p>Solde actuel: <span class="value-highlight">{{ account.currentBalance | currency:account.currency }}</span></p>
+        <p>Palier atteint: <span class="threshold-value">{{ account.percentGoal }}%</span> (Taux: {{ account.withdrawalRate | percent }})</p>
+        <p>Retrait recommandé: <span class="suggestion-value">{{ account.recommendedWithdrawal | currency:account.currency }}</span></p>
+      </div>
+      <div class="alert-actions">
+        <button class="btn btn-primary" [routerLink]="['/accounts', account.id]">
+          <i class="fa fa-arrow-right icon" aria-hidden="true"></i>
+          Voir détails
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
