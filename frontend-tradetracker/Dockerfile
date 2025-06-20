@@ -9,7 +9,7 @@ RUN npm install
 COPY . .
 
 # Construction avec le mode production pour optimiser le build
-RUN npm run build
+RUN npm run build --configuration=production
 
 FROM nginx:alpine
 
